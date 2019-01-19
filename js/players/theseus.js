@@ -6,8 +6,8 @@ var TheseusPlayer = (function() { //Picket namespace (Module pattern)
 	function getPlay(board, onPlayed) {			
 		var turn = board.turn;
 		
-		//var url = 'https://schneiderbox.net/theseus';		
-		var url = 'http://localhost/quoridor/players/test';
+		var url = 'https://schneiderbox.net/theseus';		
+		
 		
 		var qsStart = (url.lastIndexOf('?') > 0)? '&' : '?'; //Horrible format
 		var queryString = qsStart + 'id=' + playerId + '&' + board.toString();

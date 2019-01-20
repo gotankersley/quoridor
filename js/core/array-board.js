@@ -320,15 +320,15 @@ Board.prototype.qmnFromRC = function(pos) {
 }
 
 Board.prototype.qmnToMove = function(qmn) {	
-	//Example E1E2, or A2V	
-	if (qmn.length == 4) { //Move pawn
-		qmn = qmn.toLowerCase().replace(/[^a-i][^1-9][^a-i][^1-9]/g, '');
+	//Example E2, or A2V	
+	if (qmn.length == 2) { //Move pawn
+		qmn = qmn.toLowerCase().replace(/[^a-i][^1-9]/g, '');
 		return {
-			sr : parseInt(qmn.charAt(1))-1,
-			sc : parseInt(qmn.charCodeAt(0))-97,
+			sr : this.pawns[this.turn].r,
+			sc : this.pawns[this.turn].c,
 			
-			dr : parseInt(qmn.charAt(3))-1,
-			dc : parseInt(qmn.charCodeAt(2))-97,
+			dr : parseInt(qmn.charAt(1))-1,
+			dc : parseInt(qmn.charCodeAt(0))-97,
 			type: FLOOR
 		}
 	}

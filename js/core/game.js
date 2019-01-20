@@ -131,7 +131,7 @@ Game.prototype.onPlayed = function(move) {
 	var player = self.players[turn];
 	
 	var moveCode = board.makeMove(move);
-	if (moveCode != VALID) return this.gameEvents[EVENT_INVALID]('', moveCode);
+	if (moveCode != VALID) return self.gameEvents[EVENT_INVALID]('', moveCode);
 	
 	
 	//History and Memory

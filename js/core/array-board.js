@@ -287,15 +287,15 @@ Board.prototype.toString = function() {
 	
 	//Serialize into Quoridor Board Notation (QBN)
 	var boardStr = 
-		'players=' + PLAYERS + ',' +		
-		'turn=' + (this.turn+1) + ',';
+		'players=' + PLAYERS + '&' +		
+		'turn=' + (this.turn+1) + '&';
 
 	for (var p = 0; p < PLAYERS; p++) {
-		boardStr += 'pawn' + (p+1) + '=' + this.qmnFromRC(this.pawns[p]) + ',';
+		boardStr += 'pawn' + (p+1) + '=' + this.qmnFromRC(this.pawns[p]) + '&';
 	}
 
 	for (var p = 0; p < PLAYERS; p++) {
-		boardStr += 'wallcount' + (p+1) + '=' + this.wallCounts[p] + ',';
+		boardStr += 'wallcount' + (p+1) + '=' + this.wallCounts[p] + '&';
 	}
 
 	boardStr += 'wallcenters=';

@@ -336,9 +336,14 @@ var Stage = (function() { //Stage namespace (module pattern)
 		
 		
 		//Selected Pawn outline
-		if (cursor.selectOn) {						
-			drawPawn(cursor.selected.x, cursor.selected.y, COLOR_SELECTED, WIDTH_PAWN+WIDTH_SELECTED);
+		if (cursor.selectOn) {					
+			ctx.fillStyle = COLOR_HOVER_FLOOR;
+			ctx.fillRect((cursor.selected.c*GRID_SIZE)+WIDTH_FLOOR_OFFSET, (cursor.selected.r*GRID_SIZE)+WIDTH_FLOOR_OFFSET, WIDTH_FLOOR, WIDTH_FLOOR);			
 		}
+
+		//Active pawn outline
+		var pawn = board.pawns[board.turn];		
+		drawPawn(pawn.c * GRID_SIZE, pawn.r * GRID_SIZE, COLOR_SELECTED, WIDTH_PAWN+WIDTH_SELECTED);
 
 		//Pawns
 		for (var p = 0; p < PLAYERS; p++) {

@@ -11,46 +11,26 @@ var NetworkPlayer = (function() { //Network namespace (Module pattern)
 		}
 		
 		var qsStart = (url.lastIndexOf('?') > 0)? '&' : '?'; //Horrible format
-		var queryString = qsStart + 'id=' + playerId + '&board=' + board.toString();
+		var queryString = qsStart + 'id=' + playerId + '&' + board.toString();
 		url += queryString;
 		
 		ajax(url, function(data, status) {
 			//Optional argument to log info 
 			if (data.hasOwnProperty('alert')) alert(data.alert); 
 			if (data.hasOwnProperty('log')) console.log(data.log); 
-			if (data.hasOwnProperty('move') || data.hasOwnProperty('board')) {
-				
-				if (data.hasOwnProperty('move')) {
-					//Expect a BTMN String - Example: A5B4 
-					var btmn = data.move;
-					var move = board.btmnToMove(btmn);
-					move.player = PLAYER_NETWORK;
-					if (move) {
-						//Sanity check
-						if (data.hasOwnProperty('board')) { 
-							var receivedBoardStr = data.board;
-							var boardCopy = board.copy();
-							boardCopy.makeMove(move.sr, move.sc, move.dr, move.dc);
-							boardCopy.changeTurn();
-							var expectedBoardStr = boardCopy.toString();						
+			if (data.hasOwnProperty('move')) {
 								
-							if (receivedBoardStr != expectedBoardStr) return alert('Network error: Expected move "' + btmn + "' to result in " + expectedBoardStr + '"\nReceived: "' + receivedBoardStr + '"');							
-							else return onPlayed(move);	
-						}
-						//No Sanity check
-						else return onPlayed(move);							
-					}
-					else return alert ('Player attempted invalid move: ' + btmn);
+				//Expect a QMN String - Example: A5B4 
+				var qmn = data.move;				
+				var move = board.qmnToMove(qmn);
+				move.player = PLAYER_NETWORK;
+				if (move) {					
+					return onPlayed(move);							
 				}
-				else {
-					var changedBoardStr = data.board;
-					var move = board.deriveMove(changedBoardStr);
-					move.player = PLAYER_NETWORK;
-					if (move) return onPlayed(move);
-					else return alert('Network error: invalid board string. \nUnable to derive move from: "' + changedBoardStr + '"');
-				}
+				else return alert ('Player attempted invalid move: ' + btmn);				
+				
 			}
-			else return alert('Network service must return a JSON object containing either a "move", or "board" attribute.\nSee https://gotankersley.bitbucket.io/doc/network for more info.');
+			else return alert('Expected a JSON object containing "move" attribute.');
 		});
 		
 	}
@@ -67,7 +47,7 @@ var NetworkPlayer = (function() { //Network namespace (Module pattern)
 	
 	function configPlayer(player) {
 		var oldUrl = getDefaultUrl(player);		
-		var newUrl = prompt('Enter a service URL:\n(See https://gotankersley.bitbucket.io/doc/network for more info)', oldUrl );
+		var newUrl = prompt('Enter a service URL:', oldUrl );
 		if (!newUrl) return;
 		var propertyName = MENU_PREFIX + 'networkUrl' + player;	
 		localStorage.setItem(propertyName, newUrl);

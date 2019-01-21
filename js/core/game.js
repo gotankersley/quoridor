@@ -8,6 +8,7 @@ var PLAYER_HUMAN = 0;
 var PLAYER_RANDOM = 1;
 var PLAYER_HEURISTIC = 2;
 var PLAYER_THESEUS = 3;
+var PLAYER_NETWORK = 4;
 
 
 var EVENT_INVALID = 0;
@@ -118,6 +119,7 @@ Game.prototype.play = function() {
 	//All Async - expect onPlayed callback	
 	switch (player) {		
 		case PLAYER_RANDOM: RandomPlayer.getPlay(board, this.onPlayed); break;			//Random		
+		case PLAYER_NETWORK: NetworkPlayer.getPlay(board, this.onPlayed); break;			//Network		
 		case PLAYER_THESEUS: TheseusPlayer.getPlay(board, this.onPlayed); break;			//Theseus		
 		default: alert('Invalid player');
 	}		

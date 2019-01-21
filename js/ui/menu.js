@@ -27,7 +27,8 @@ MenuProperties.prototype.getDefault = function(propertyName, defaultValue) {
 function MenuManager() {
 	var PLAYER_OPTIONS = {
 		Human:PLAYER_HUMAN, 	
-		Theseus:PLAYER_THESEUS,					
+		Theseus:PLAYER_THESEUS,	
+		Network:PLAYER_NETWORK,				
 		//Random:PLAYER_RANDOM,		
 	};	
 		
@@ -52,7 +53,26 @@ function MenuManager() {
 	//Root menu			
 	this.rootMenu.add(this.properties, 'player1', PLAYER_OPTIONS).onChange(this.onChangePlayer);
 	this.rootMenu.add(this.properties, 'player2', PLAYER_OPTIONS).onChange(this.onChangePlayer);	
+	
+	//Configure button hack
+	var propertyNodes = document.querySelectorAll('.dg.main .property-name');			
+	for (var n = 0; n < propertyNodes.length; n++) {
+		var title = propertyNodes[n].innerHTML;			
+		if (title == 'player1' || title == 'player2') {
+			var node = propertyNodes[n];
 			
+			var btnNode = document.createElement('img');		
+			btnNode.className += 'config-button ' + title;	
+			btnNode.setAttribute('data-name', title);
+			node.nextSibling.appendChild(btnNode);
+			btnNode.onclick = function(e) {
+				if (!e) var e = window.event;
+				var player = (this.dataset["name"] == "player1")? PLAYER1 : PLAYER2;
+				game.onPlayerConfig(player);
+				
+			}
+		}		
+	}	
 	
 }
 
@@ -61,7 +81,14 @@ MenuManager.prototype.onChangePlayer = function(val) {
 	
 	
 	var selectedPlayer = parseInt(val);			
-		
+	
+	//Show / Hide player config buttons
+	var configButton = document.querySelectorAll('.config-button.' + this.property)[0];
+	if (configButton) {
+		if (selectedPlayer == PLAYER_NETWORK) configButton.style.visibility = 'visible';		
+	}
+	else configButton.style.visibility = 'hidden';
+
 	game.players = [parseInt(menu.player1), parseInt(menu.player2)]; //Information hiding - pshaww...		
 	game.play();
 }

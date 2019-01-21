@@ -340,7 +340,7 @@ Board.prototype.qmnToMove = function(qmn) {
 		else throw new Error('Invalid QMN wall type:' + wall);
 
 		return {
-			r : parseInt(qmn.charAt(1))-2,
+			r : parseInt(qmn.charAt(1))-1,
 			c : parseInt(qmn.charCodeAt(0))-97,						
 			type: wall
 		}

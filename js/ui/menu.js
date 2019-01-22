@@ -8,6 +8,7 @@ function MenuProperties() {
 	this.showCenters = this.getDefault('showCenters', false);
 	this.showPositions = this.getDefault('showPositions', false);
 	this.showCoordinates = this.getDefault('showCoordinates', true);
+	this.showPath = this.getDefault('showPath', true);
 	this.animSpeed = 500;	
 }
 
@@ -45,6 +46,7 @@ function MenuManager() {
 	displayMenu.add(this.properties, 'showCenters').onChange(this.persistChange);			
 	displayMenu.add(this.properties, 'showPositions').onChange(this.persistChange);		
 	displayMenu.add(this.properties, 'showCoordinates').onChange(this.persistChange);		
+	displayMenu.add(this.properties, 'showPath').onChange(this.persistChange);		
 	displayMenu.add(this.properties, 'animSpeed', 0, 5000);	
 	
 	//Links menu

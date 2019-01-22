@@ -40,18 +40,18 @@ const ENDING_ROWS = [0, FLOOR_SIZE-1];
 const SEARCH_DIRS_BY_PLAYER = [
 	//Player1
 	[
-		{r:-1,c:0}, //Forward
-		{r:0, c:1}, //Left
-		{r:0, c:-1}, //Right
-		{r:1, c:0}, //Backward
+		{r:-1, c:0, dir:'F'}, //Forward
+		{r:0, c:1, dir:'R'}, //Right
+		{r:0, c:-1, dir:'L'}, //Left
+		{r:1, c:0, dir:'B'}, //Backward
 	],
 
 	//Player2
 	[
-		{r:1,c:0}, //Forward
-		{r:0, c:1}, //Left
-		{r:0, c:-1}, //Right
-		{r:-1, c:0}, //Backward
+		{r:1,c:0, dir:'B'}, //Forward
+		{r:0, c:1, dir:'R'}, //Left
+		{r:0, c:-1, dir:'L'}, //Right
+		{r:-1, c:0, dir:'F'}, //Backward
 	],
 ];
 const MOVE_DELTAS_BY_DIR = [
@@ -84,7 +84,7 @@ function Board() {
 			this.breadcrumbs[r][c] = false;
 		}
 	}
-	
+	this.paths = [[],[]];	
 }
 
 Board.prototype.init = function(boardStr) {	
@@ -119,8 +119,14 @@ Board.prototype.copy = function() {
 	for (var p = 0; p < PLAYERS; p++) {
 		newBoard.pawns[p] = {r:this.pawns[p].r, c:this.pawns[p].c};
 		newBoard.wallCounts[p] = this.wallCounts[p];		
+		for (var i = 0; i < this.paths[p].length; i++) {
+			var path = this.paths[p];
+			newBoard.paths[p].push({r:path[i].r, c:path[i].c});
+		}
 	}
-	newBoard.turn = this.turn;
+	newBoard.turn = this.turn;	
+
+	
 		
 	return newBoard;	
 }
@@ -136,6 +142,23 @@ Board.prototype.canSelect = function(r, c) {
 	if (pawn.r == r && pawn.c == c) return true;
 	else return false;
 	
+}
+
+Board.prototype.canJump = function(turn, sr, sc, dr, dc) {
+	//Note - this doesn't validate current pawn's position
+	var oppTurn = +(!turn);
+	var oppPawn = this.pawns[oppTurn];			
+	var deltaR = Math.abs(sr-dr);
+	var deltaC = Math.abs(sc-dc);
+	if (deltaR == 2 && deltaC == 0) {
+		var dir = deltaR/(dr-sr);
+		if (oppPawn.r == sr+dir && oppPawn.c == dc) return true;
+	}
+	else if (deltaR == 0 && deltaC == 2) {
+		var dir = deltaC/(dc-sc);
+		if (oppPawn.c == sc+dir && oppPawn.r == dr) return true;
+	}
+	return false;
 }
 
 Board.prototype.getMoveFromDir = function(dir) {		
@@ -161,6 +184,8 @@ Board.prototype.makeMove = function(move) {
 
 		//Update board
 		this.movePawn(move.dr, move.dc);
+		this.hasPath(PLAYER1);
+		this.hasPath(PLAYER2);
 	}
 	//Placing wall
 	else {
@@ -193,21 +218,28 @@ Board.prototype.validateMove = function(sr, sc, dr, dc) {
 	return VALID;
 }
 
-Board.prototype.canJump = function(turn, sr, sc, dr, dc) {
-	var oppTurn = +(!turn);
-	var oppPawn = this.pawns[oppTurn];			
-	var deltaR = Math.abs(sr-dr);
-	var deltaC = Math.abs(sc-dc);
-	if (deltaR == 2 && deltaC == 0) {
-		var dir = deltaR/(dr-sr);
-		if (oppPawn.r == sr+dir && oppPawn.c == dc) return true;
-	}
-	else if (deltaR == 0 && deltaC == 2) {
-		var dir = deltaC/(dc-sc);
-		if (oppPawn.c == sc+dir && oppPawn.r == dr) return true;
-	}
-	return false;
+Board.prototype.validatePlace = function(r, c, wallType) {
+	if (this.wallCounts[this.turn] <= 0) return INVALID_WALL_COUNT;
+	else if (this.walls[r][c] != NO_WALL) return INVALID_DESTINATION;
+	
+	else if (r-1 >= 0 && this.walls[r-1][c] == wallType && wallType == V_WALL) return INVALID_DESTINATION;
+	else if (r+1 < WALL_SIZE && this.walls[r+1][c] == wallType && wallType == V_WALL) return INVALID_DESTINATION;
+	else if (c-1 >= 0 && this.walls[r][c-1] == wallType && wallType == H_WALL) return INVALID_DESTINATION;
+	else if (c+1 < WALL_SIZE && this.walls[r][c+1] == wallType&& wallType == H_WALL) return INVALID_DESTINATION;
+
+	//Check for path - after it's placed
+	this.walls[r][c] = wallType; //Temp place for checking
+	var hasPath1 = this.hasPath(PLAYER1);
+	var hasPath2 = false;
+	if (hasPath1) hasPath2 = this.hasPath(PLAYER2);
+	this.walls[r][c] = NO_WALL; //Undo temp place
+
+	if (!hasPath1 || !hasPath2) return INVALID_PATH;	
+	else return VALID;
 }
+
+
+
 
 Board.prototype.collidesWithWall = function(sr, sc, dr, dc) {			
 	//Same row
@@ -253,25 +285,6 @@ Board.prototype.movePawn = function(r, c) {
 		
 }
 
-Board.prototype.validatePlace = function(r, c, wallType) {
-	if (this.wallCounts[this.turn] <= 0) return INVALID_WALL_COUNT;
-	else if (this.walls[r][c] != NO_WALL) return INVALID_DESTINATION;
-	
-	else if (r-1 >= 0 && this.walls[r-1][c] == wallType && wallType == V_WALL) return INVALID_DESTINATION;
-	else if (r+1 < WALL_SIZE && this.walls[r+1][c] == wallType && wallType == V_WALL) return INVALID_DESTINATION;
-	else if (c-1 >= 0 && this.walls[r][c-1] == wallType && wallType == H_WALL) return INVALID_DESTINATION;
-	else if (c+1 < WALL_SIZE && this.walls[r][c+1] == wallType&& wallType == H_WALL) return INVALID_DESTINATION;
-
-	//Check for path - after it's placed
-	this.walls[r][c] = wallType; //Temp place for checking
-	var hasPath1 = this.hasPath(PLAYER1);
-	var hasPath2 = false;
-	if (hasPath1) hasPath2 = this.hasPath(PLAYER2);
-	this.walls[r][c] = NO_WALL; //Undo temp place
-
-	if (!hasPath1 || !hasPath2) return INVALID_PATH;	
-	else return VALID;
-}
 
 Board.prototype.placeWall = function(r, c, wallType) {
 	//Assume that it has already been validated	
@@ -280,7 +293,7 @@ Board.prototype.placeWall = function(r, c, wallType) {
 }
 
 Board.prototype.hasPath = function(turn) {
-	
+	//TODO: side effecsts
 	//Clear breadcrumbs
 	for (var r = 0; r < FLOOR_SIZE; r++) {		
 		for (var c = 0; c < FLOOR_SIZE; c++) {
@@ -291,14 +304,29 @@ Board.prototype.hasPath = function(turn) {
 	//Depth first search
 	var oppTurn = +(!turn);
 	var oppPawn = this.pawns[oppTurn];
+	var pawn = this.pawns[turn];
 
 	var searchDirs = SEARCH_DIRS_BY_PLAYER[turn];
-	var queue = [this.pawns[turn]];
+	var queue = [{r:pawn.r, c:pawn.c, path:''}];
 	var tmpI = 0;
 	while (queue.length) {
 		var first = queue.shift();
 		
-		if (first.r == ENDING_ROWS[turn]) return true; 
+		if (first.r == ENDING_ROWS[turn]) {
+			var pathStr = first.path;
+			var path = [];
+			var pos = {r:pawn.r, c:pawn.c};
+			for (var p = 0; p < pathStr.length; p++) {			
+				var d = pathStr.charAt(p);
+				if (d == 'F') pos.r--;
+				else if (d == 'L') pos.c--;
+				else if (d == 'R') pos.c++;
+				else if (d == 'B') pos.r++;
+				path.push({r:pos.r, c:pos.c});
+			}
+			this.paths[turn] = path;
+			return true; 
+		}
 		for (var d = 0; d < 4; d++) {
 			var dir = searchDirs[d];
 			var deltaR = first.r + dir.r;
@@ -311,7 +339,7 @@ Board.prototype.hasPath = function(turn) {
 						var jumpC = deltaC + dir.c;
 						if (jumpR >= 0 && jumpR < FLOOR_SIZE && jumpC >= 0 && jumpC < FLOOR_SIZE) {
 							if (this.canJump(turn, first.r, first.c, jumpR, jumpC)) {
-								queue.push({r:jumpR, c:jumpC});
+								queue.push({r:jumpR, c:jumpC, path:first.path+dir.dir+dir.dir});
 								this.breadcrumbs[jumpR][jumpC] = true;
 							}
 						}
@@ -319,7 +347,7 @@ Board.prototype.hasPath = function(turn) {
 					else {
 											
 						if (!this.collidesWithWall(first.r, first.c, deltaR, deltaC)) {
-							queue.push({r:deltaR, c:deltaC});
+							queue.push({r:deltaR, c:deltaC, path:first.path+dir.dir});
 							this.breadcrumbs[deltaR][deltaC] = true;
 						}
 					}
@@ -332,9 +360,11 @@ Board.prototype.hasPath = function(turn) {
 			break;
 		}
 	}
-	
+
+	this.paths[turn] = [];
 	return false;
 }
+
 
 Board.prototype.score = function() {
 	return 0; //TODO	

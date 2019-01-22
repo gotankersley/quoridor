@@ -20,6 +20,7 @@ var Stage = (function() { //Stage namespace (module pattern)
 	var COLOR_GRID = '#333';
 	//var COLOR_SUGGEST = 'aqua';
 	var COLOR_PLAYERS = [COLOR_PLAYER1, COLOR_PLAYER2];
+	var COLOR_PATHS = ['pink', 'cyan'];
 	
 	//TODO: change to size?
 	var WIDTH_PATH = 8;
@@ -87,8 +88,10 @@ var Stage = (function() { //Stage namespace (module pattern)
 		//Menu				
 		var menuManager = new MenuManager();
 		menu = menuManager.properties;				
-	
+		
 		board = newGame.board.copy();			
+		board.hasPath(PLAYER1);
+		board.hasPath(PLAYER2);
 		canvas = document.getElementById('mainCanvas');
 		canvasBounds = canvas.getBoundingClientRect(); 
 		ctx = canvas.getContext('2d');    			
@@ -357,7 +360,10 @@ var Stage = (function() { //Stage namespace (module pattern)
 		if (menu.showGrid) drawGrid();
 		if (menu.showLabels) drawLabels();
 		if (menu.showCoordinates) drawCoordinates();
-
+		if (menu.showPath) {
+			drawPath(PLAYER1, COLOR_PATHS[PLAYER1]);
+			drawPath(PLAYER2, COLOR_PATHS[PLAYER2]);
+		}
 		
 		
 		//Animation
@@ -429,6 +435,16 @@ var Stage = (function() { //Stage namespace (module pattern)
 		ctx.fillText('(' + coords + ')', 10, CANVAS_SIZE);				
 	}
 		
+	function drawPath(turn, color) {
+		var path = board.paths[turn];
+		ctx.fillStyle = color;
+		var offset = turn*10;
+		for (var p = 0; p < path.length; p++) {
+			var pos = path[p];
+			ctx.fillRect((pos.c*GRID_SIZE)+HALF_GRID-10, (pos.r*GRID_SIZE)+HALF_GRID-10+offset, 20, 20);	
+		}
+
+	}
 	//Export
 	return {init:init, sendMessage:sendMessage};
 })();

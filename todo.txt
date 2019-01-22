@@ -1,0 +1,11 @@
+Todo:
+- WASD pawn move
+- bitboard
+- optimized pathfinding
+- 3D views
+- move error messages to stage
+
+Names:
+- Status Quo
+- Minotaur
+- Labyrinth

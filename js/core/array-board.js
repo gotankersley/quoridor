@@ -1,4 +1,5 @@
 const VALID = 0;
+//const VALID_JUMP = -2;
 const INVALID = -1;
 const INVALID_JUMP = 1;
 const INVALID_SOURCE = 2;
@@ -68,7 +69,7 @@ function Board() {
 	this.pawns = [{r:WALL_SIZE, c:CENTER_SPACE},{r:0, c:CENTER_SPACE}];
 	
 	this.wallCounts = [STARTING_WALLS, STARTING_WALLS];
-	this.walls = new Array(WALL_SIZE);	//Wall Centers	
+	this.walls = new Array(WALL_SIZE);	//Wall Centers		
 	for (var r = 0; r < WALL_SIZE; r++) {
 		this.walls[r] = new Array(WALL_SIZE);
 		for (var c = 0; c < WALL_SIZE; c++) {
@@ -76,6 +77,13 @@ function Board() {
 		}
 	}
 
+	this.breadcrumbs = new Array(FLOOR_SIZE);	//Temp breadcrumbs for path finding
+	for (var r = 0; r < FLOOR_SIZE; r++) {
+		this.breadcrumbs[r] = new Array(FLOOR_SIZE);
+		for (var c = 0; c < FLOOR_SIZE; c++) {
+			this.breadcrumbs[r][c] = false;
+		}
+	}
 	
 }
 
@@ -135,14 +143,21 @@ Board.prototype.getMoveFromDir = function(dir) {
 	var turn = this.turn;
 	var pawn = this.pawns[turn];	
 	var delta = MOVE_DELTAS_BY_DIR[dir];
-	return {sr:pawn.r, sc:pawn.c, dr:pawn.r + delta.r, dc:pawn.c + delta.c, type:FLOOR};		
+	var move = {sr:pawn.r, sc:pawn.c, dr:pawn.r + delta.r, dc:pawn.c + delta.c, type:FLOOR};
+	if (this.canJump(turn, move.sr, move.sc, move.dr+delta.r, move.dc+delta.c)) {
+		move.dr += delta.r;
+		move.dc += delta.c;
+		return move;
+	}
+	else return move;
 }
 
 Board.prototype.makeMove = function(move) {
 	//Moving Pawn
 	if (move.type == FLOOR) {
 		var moveCode = this.validateMove(move.sr, move.sc, move.dr, move.dc);		
-		if (moveCode != VALID) return moveCode;
+
+		if (moveCode != VALID ) return moveCode;
 
 		//Update board
 		this.movePawn(move.dr, move.dc);
@@ -164,17 +179,34 @@ Board.prototype.validateMove = function(sr, sc, dr, dc) {
 		var oppTurn = +(!this.turn);
 		var deltaR = Math.abs(sr-dr);
 		var deltaC = Math.abs(sc-dc);
-
-		if (deltaR > 1 || deltaC > 1) return INVALID_MOVE;
-		if (deltaR == 0 && deltaC == 0) return INVALID_MOVE;
-		else if (deltaR == 1 && deltaC == 1) return INVALID_MOVE_DIAGONAL;
-		else if (this.collidesWithWall(sr, sc, dr, dc)) return INVALID_MOVE_WALL;		
-		else if (this.pawns[oppTurn].r == dr && this.pawns[oppTurn].c == dc) return INVALID_DESTINATION;		
-		//else if (this.board[dr][dc] != EMPTY) return INVALID_JUMP;
 		
+		if (deltaR <= 0 && deltaC <= 0) return INVALID_MOVE;
+		else if (deltaR > 2 || deltaC > 2) return INVALID_MOVE;
+		else if (deltaR == 1 && deltaC == 1) return INVALID_MOVE_DIAGONAL;
+		else if (this.pawns[oppTurn].r == dr && this.pawns[oppTurn].c == dc) return INVALID_DESTINATION;		
+		else if (this.collidesWithWall(sr, sc, dr, dc)) return INVALID_MOVE_WALL;						
 	}
+
+	//Test for jump
+	if (this.canJump(this.turn, sr, sc, dr, dc)) return VALID;					
 	
 	return VALID;
+}
+
+Board.prototype.canJump = function(turn, sr, sc, dr, dc) {
+	var oppTurn = +(!turn);
+	var oppPawn = this.pawns[oppTurn];			
+	var deltaR = Math.abs(sr-dr);
+	var deltaC = Math.abs(sc-dc);
+	if (deltaR == 2 && deltaC == 0) {
+		var dir = deltaR/(dr-sr);
+		if (oppPawn.r == sr+dir && oppPawn.c == dc) return true;
+	}
+	else if (deltaR == 0 && deltaC == 2) {
+		var dir = deltaC/(dc-sc);
+		if (oppPawn.c == sc+dir && oppPawn.r == dr) return true;
+	}
+	return false;
 }
 
 Board.prototype.collidesWithWall = function(sr, sc, dr, dc) {			
@@ -231,8 +263,14 @@ Board.prototype.validatePlace = function(r, c, wallType) {
 	else if (c+1 < WALL_SIZE && this.walls[r][c+1] == wallType&& wallType == H_WALL) return INVALID_DESTINATION;
 
 	//Check for path - after it's placed
-	//else if (!this.hasPath(this.turn)) return INVALID_PATH;
-	return VALID;
+	this.walls[r][c] = wallType; //Temp place for checking
+	var hasPath1 = this.hasPath(PLAYER1);
+	var hasPath2 = false;
+	if (hasPath1) hasPath2 = this.hasPath(PLAYER2);
+	this.walls[r][c] = NO_WALL; //Undo temp place
+
+	if (!hasPath1 || !hasPath2) return INVALID_PATH;	
+	else return VALID;
 }
 
 Board.prototype.placeWall = function(r, c, wallType) {
@@ -242,28 +280,59 @@ Board.prototype.placeWall = function(r, c, wallType) {
 }
 
 Board.prototype.hasPath = function(turn) {
+	
+	//Clear breadcrumbs
+	for (var r = 0; r < FLOOR_SIZE; r++) {		
+		for (var c = 0; c < FLOOR_SIZE; c++) {
+			this.breadcrumbs[r][c] = false;
+		}
+	}
+
 	//Depth first search
 	var oppTurn = +(!turn);
 	var oppPawn = this.pawns[oppTurn];
 
 	var searchDirs = SEARCH_DIRS_BY_PLAYER[turn];
 	var queue = [this.pawns[turn]];
+	var tmpI = 0;
 	while (queue.length) {
-		var first = queue.unshift();
+		var first = queue.shift();
 		
-		if (first.r == ENDING_ROWS[turn]) return true; //Todo, check for wall collisions
+		if (first.r == ENDING_ROWS[turn]) return true; 
 		for (var d = 0; d < 4; d++) {
 			var dir = searchDirs[d];
 			var deltaR = first.r + dir.r;
-			var deltaC = first.c + dir.c;
+			var deltaC = first.c + dir.c;			
 			if (deltaR >= 0 && deltaR < FLOOR_SIZE && deltaC >= 0 && deltaC < FLOOR_SIZE) {
-				if (this.oppPawn.r != deltaR && this.oppPawn != deltaC) {
-					//Todo, check for wall collisions
-					queue.push({r:deltaR, c:deltaC});
+				if (!this.breadcrumbs[deltaR][deltaC]) {
+					
+					if (oppPawn.r == deltaR && oppPawn.c == deltaC) {
+						var jumpR = deltaR + dir.r;
+						var jumpC = deltaC + dir.c;
+						if (jumpR >= 0 && jumpR < FLOOR_SIZE && jumpC >= 0 && jumpC < FLOOR_SIZE) {
+							if (this.canJump(turn, first.r, first.c, jumpR, jumpC)) {
+								queue.push({r:jumpR, c:jumpC});
+								this.breadcrumbs[jumpR][jumpC] = true;
+							}
+						}
+					}
+					else {
+											
+						if (!this.collidesWithWall(first.r, first.c, deltaR, deltaC)) {
+							queue.push({r:deltaR, c:deltaC});
+							this.breadcrumbs[deltaR][deltaC] = true;
+						}
+					}
 				}
 			}
 		}
+
+		if (tmpI++ >= 100) {
+			console.log('infin8 loop');
+			break;
+		}
 	}
+	
 	return false;
 }
 

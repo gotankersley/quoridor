@@ -75,7 +75,7 @@ var Stage = (function() { //Stage namespace (module pattern)
 			case INVALID_TURN: return 'Nope: wrong player...';
 			case INVALID_BOUNDS: return 'Nope: must move on the board...';
 			case INVALID_DESTINATION: return 'Nope: destination not empty...';
-			case INVALID_PATH: return 'Nope: you can\'t the other pawn\'s path entirely...';
+			case INVALID_PATH: return 'Nope: you can\'t block the other pawn\'s path entirely...';
 			case INVALID_WALL_COUNT: return 'Nope: you are out of walls to place...';
 			default: return 'Nope: invalid...';
 		}

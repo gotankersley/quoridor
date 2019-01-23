@@ -152,11 +152,15 @@ Board.prototype.canJump = function(turn, sr, sc, dr, dc) {
 	var deltaC = Math.abs(sc-dc);
 	if (deltaR == 2 && deltaC == 0) {
 		var dir = deltaR/(dr-sr);
-		if (oppPawn.r == sr+dir && oppPawn.c == dc) return true;
+		if (!this.collidesWithWall(sr, sc, sr+dir, dc) && !this.collidesWithWall(sr+dir,sc,dr,dc)){
+			if (oppPawn.r == sr+dir && oppPawn.c == dc) return true;
+		}
 	}
 	else if (deltaR == 0 && deltaC == 2) {
 		var dir = deltaC/(dc-sc);
-		if (oppPawn.c == sc+dir && oppPawn.r == dr) return true;
+		if (!this.collidesWithWall(sr, sc, dr, sc+dir) && !this.collidesWithWall(sr,sc+dir,dr,dc)){
+			if (oppPawn.c == sc+dir && oppPawn.r == dr) return true;
+		}
 	}
 	return false;
 }
@@ -167,10 +171,13 @@ Board.prototype.getMoveFromDir = function(dir) {
 	var pawn = this.pawns[turn];	
 	var delta = MOVE_DELTAS_BY_DIR[dir];
 	var move = {sr:pawn.r, sc:pawn.c, dr:pawn.r + delta.r, dc:pawn.c + delta.c, type:FLOOR};
-	if (this.canJump(turn, move.sr, move.sc, move.dr+delta.r, move.dc+delta.c)) {
-		move.dr += delta.r;
-		move.dc += delta.c;
-		return move;
+	if (this.onBoard(move.dr+delta.r, move.dc+delta.c)) {
+		if (this.canJump(turn, move.sr, move.sc, move.dr+delta.r, move.dc+delta.c)) {
+			move.dr += delta.r;
+			move.dc += delta.c;
+			return move;
+		}
+		else return move;
 	}
 	else return move;
 }
@@ -384,20 +391,8 @@ Board.prototype.changeTurn = function() {
 
 Board.prototype.toString = function() {	
 	
-	//Serialize into Quoridor Board Notation (QBN)
-	var boardStr = 
-		'players=' + PLAYERS + '&' +		
-		'turn=' + (this.turn+1) + '&';
-
-	for (var p = 0; p < PLAYERS; p++) {
-		boardStr += 'pawn' + (p+1) + '=' + this.qmnFromRC(this.pawns[p]) + '&';
-	}
-
-	for (var p = 0; p < PLAYERS; p++) {
-		boardStr += 'wallcount' + (p+1) + '=' + this.wallCounts[p] + '&';
-	}
-
-	boardStr += 'wallcenters=';
+	//Serialize into Theseus Quoridor Board Notation (TQBN)
+	var boardStr = '';
 	for (var r = 0; r < WALL_SIZE; r++) {
 		for (var c = 0; c < WALL_SIZE; c++) {
 			var wallType = this.walls[r][c];			
@@ -407,6 +402,17 @@ Board.prototype.toString = function() {
 			else throw new Error('Invalid wall type at ' + r + ',' + c + ':' + wallType);
 		}
 	}
+	boardStr += (this.turn+1);
+
+	for (var p = 0; p < PLAYERS; p++) {	
+		//Pawn	
+		boardStr += this.qmnFromRC(this.pawns[p]);
+
+		//Wallcount
+		var wallCount = Number.toString(this.wallCounts[p]);
+		if (wallCount.length == 1) wallCount = '0' + wallCount;  //Zero pad
+		boardStr += this.wallCounts[p];
+	}	
 	
 	return boardStr;
 }

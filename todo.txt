@@ -1,11 +1,20 @@
 Todo:
-- WASD pawn move
 - bitboard
 - optimized pathfinding
 - 3D views
-- move error messages to stage
+- Move animation
+- TQBN notation
+- DrawRemainingWalls
+
+
+Issues:
+- Diag jumps
+- Diag jumps on end row?
+- BFS vs DFS
 
 Names:
 - Status Quo
 - Minotaur
 - Labyrinth
+
+

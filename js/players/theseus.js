@@ -9,7 +9,7 @@ var TheseusPlayer = (function() { //Picket namespace (Module pattern)
 		var url = 'https://schneiderbox.net/theseus';				
 		
 		var qsStart = (url.lastIndexOf('?') > 0)? '&' : '?'; //Horrible format
-		var queryString = qsStart + 'id=' + playerId + '&' + board.toString();
+		var queryString = qsStart + 'id=' + playerId + '&tqbn=' + board.toString();
 		url += queryString;
 		
 		ajax(url, function(data, status) {

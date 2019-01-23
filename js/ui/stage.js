@@ -8,19 +8,20 @@ const WIDTH_FLOOR_OFFSET = (GRID_SIZE-WIDTH_FLOOR)/2;
 
 var Stage = (function() { //Stage namespace (module pattern)						
 
-	var COLOR_WALL = '#33aa33';
+	var COLOR_WALL = '#71BF76';
 	var COLOR_PATH = '#786f5e';
 	var COLOR_PLAYER1 = '#ff4242';
-	var COLOR_PLAYER2 = '#3333aa';		
+	var COLOR_PLAYER2 = '#7092BE';//'#3333aa';		
 
 	var COLOR_SELECTED = '#aaa';
 	var COLOR_HOVER_FLOOR = '#eeeeff';
 	var COLOR_HOVER_WALL = '#eeeeff';
-	var COLOR_OUTLINE = '#333';			
+			
 	var COLOR_GRID = '#333';
 	//var COLOR_SUGGEST = 'aqua';
 	var COLOR_PLAYERS = [COLOR_PLAYER1, COLOR_PLAYER2];
-	var COLOR_PATHS = ['pink', 'cyan'];
+	var COLOR_PATHS = ['#FF7575', '#BDDFFF'];
+	var COLOR_PAWN_OUTLINES = ['#E62929', '#5779A5' ];	
 	
 	//TODO: change to size?
 	var WIDTH_PATH = 8;
@@ -270,7 +271,7 @@ var Stage = (function() { //Stage namespace (module pattern)
 	
 	//Drawing
 	function draw(time) {			
-		ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+		ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE+10);
 		
 		//Turn
 		var turn = board.turn;		
@@ -345,8 +346,8 @@ var Stage = (function() { //Stage namespace (module pattern)
 		}
 
 		//Active pawn outline
-		var pawn = board.pawns[board.turn];		
-		drawPawn(pawn.c * GRID_SIZE, pawn.r * GRID_SIZE, COLOR_SELECTED, WIDTH_PAWN+WIDTH_SELECTED);
+		var pawn = board.pawns[board.turn];			
+		drawPawn(pawn.c * GRID_SIZE, pawn.r * GRID_SIZE, COLOR_PAWN_OUTLINES[board.turn], WIDTH_PAWN+WIDTH_SELECTED);
 
 		//Pawns
 		for (var p = 0; p < PLAYERS; p++) {
@@ -399,8 +400,8 @@ var Stage = (function() { //Stage namespace (module pattern)
 		for (var i = 0; i < FLOOR_SIZE; i++) {
 			var unit = i * GRID_SIZE;			
 			
-			ctx.fillText(i+1, 10, unit + labelOffset + 5);	//Vertical label
-			ctx.fillText(String.fromCharCode(65 + i), unit + labelOffset - 5, CANVAS_SIZE - 10);	//Horizontal label
+			ctx.fillText(i+1, -1, unit + labelOffset + 5);	//Vertical label
+			ctx.fillText(String.fromCharCode(65 + i), unit + labelOffset - 5, 10);	//Horizontal label
 		}	
 	}
 		
@@ -417,12 +418,12 @@ var Stage = (function() { //Stage namespace (module pattern)
 		var text = (turn == PLAYER1)? 'Player 1' : 'Player 2';
 				
 		ctx.fillStyle = COLOR_PATH;
-		ctx.fillText(text, 10, 15);		
+		ctx.fillText(text, 60, CANVAS_SIZE+5);		
 	}
 
 	function drawWallCounts() {								
 		ctx.fillStyle = COLOR_PATH;
-		ctx.fillText(board.wallCounts[PLAYER1], CANVAS_SIZE-HALF_GRID, CANVAS_SIZE);	//Player 1	
+		ctx.fillText(board.wallCounts[PLAYER1], CANVAS_SIZE-HALF_GRID, CANVAS_SIZE+5);	//Player 1	
 		ctx.fillText(board.wallCounts[PLAYER2],  CANVAS_SIZE-HALF_GRID, 20);	//Player 2	
 	}
 	
@@ -432,7 +433,7 @@ var Stage = (function() { //Stage namespace (module pattern)
 		else coords = cursor.wall.r + ',' + cursor.wall.c;
 
 		ctx.fillStyle = COLOR_PATH;
-		ctx.fillText('(' + coords + ')', 10, CANVAS_SIZE);				
+		ctx.fillText('(' + coords + ')', 10, CANVAS_SIZE+5);				
 	}
 		
 	function drawPath(turn, color) {

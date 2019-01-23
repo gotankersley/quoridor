@@ -11,7 +11,7 @@ var NetworkPlayer = (function() { //Network namespace (Module pattern)
 		}
 		
 		var qsStart = (url.lastIndexOf('?') > 0)? '&' : '?'; //Horrible format
-		var queryString = qsStart + 'id=' + playerId + '&' + board.toString();
+		var queryString = qsStart + 'id=' + playerId + '&tqbn=' + board.toString();
 		url += queryString;
 		
 		ajax(url, function(data, status) {

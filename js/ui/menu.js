@@ -3,12 +3,16 @@ var MENU_PREFIX = 'bt.';
 function MenuProperties() {	
 	this.player1 = PLAYER_HUMAN;
 	this.player2 = PLAYER_HUMAN;
-	this.showGrid = this.getDefault('showGrid', false);
+
+	//Display
 	this.showLabels = this.getDefault('showLabels', true);
-	this.showCenters = this.getDefault('showCenters', false);
-	this.showPositions = this.getDefault('showPositions', false);
+
+	//Debug
+	this.showGrid = this.getDefault('showGrid', false);	
+	this.showCenters = this.getDefault('showCenters', false);	
 	this.showCoordinates = this.getDefault('showCoordinates', true);
 	this.showPath = this.getDefault('showPath', true);
+	this.pathFindingBFS = true;
 	this.animSpeed = 500;	
 }
 
@@ -41,14 +45,18 @@ function MenuManager() {
 	
 	//Display menu
 	var displayMenu = optionsMenu.addFolder('Display');	
-	displayMenu.add(this.properties, 'showGrid').onChange(this.persistChange);		
 	displayMenu.add(this.properties, 'showLabels').onChange(this.persistChange);		
-	displayMenu.add(this.properties, 'showCenters').onChange(this.persistChange);			
-	displayMenu.add(this.properties, 'showPositions').onChange(this.persistChange);		
-	displayMenu.add(this.properties, 'showCoordinates').onChange(this.persistChange);		
-	displayMenu.add(this.properties, 'showPath').onChange(this.persistChange);		
-	displayMenu.add(this.properties, 'animSpeed', 0, 5000);	
-	
+		
+
+	//Debug menu
+	var debugMenu = optionsMenu.addFolder('Debug');	
+	debugMenu.add(this.properties, 'showGrid');
+	debugMenu.add(this.properties, 'showCenters');	
+	debugMenu.add(this.properties, 'showCoordinates');
+	debugMenu.add(this.properties, 'showPath');
+	debugMenu.add(this.properties, 'pathFindingBFS').onChange(this.onChangePathFinding);
+	debugMenu.add(this.properties, 'animSpeed', 0, 5000);	
+
 	//Links menu
 	//var linksMenu = optionsMenu.addFolder('Links');				
 	
@@ -95,6 +103,11 @@ MenuManager.prototype.onChangePlayer = function(val) {
 	game.play();
 }
 
+
+MenuManager.prototype.onChangePathFinding = function(val) {	
+	if (val) SEARCH_PATH_TYPE = 'B';
+	else SEARCH_PATH_TYPE = 'D';
+}
 
 MenuManager.prototype.persistChange = function(val) {
 	var propertyName = MENU_PREFIX + this.property;	

@@ -3,14 +3,13 @@ Todo:
 - optimized pathfinding
 - 3D views
 - Move animation
-- TQBN notation
-- DrawRemainingWalls
-
+- DrawRemainingWalls 
+- Arena / node.js GA
 
 Issues:
 - Diag jumps
 - Diag jumps on end row?
-- BFS vs DFS
+- BFS vs DFS vs A*
 
 Names:
 - Status Quo

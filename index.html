@@ -32,10 +32,10 @@
 <div id="message"></div>
 <script>
 	var menu;
-	/*
+	
 	Url.init(function(e) {
 	var hash = window.location.hash.replace('#', '');		
-		if (hash.length == BOARD_SPACES + 1) {
+		if (hash.length >= TQBN_SIZE) {
 			var newBoard = new Board(hash);			
 			game.updateBoard(newBoard);
 		}
@@ -44,14 +44,12 @@
 	var boardStr;
 	if (performance.navigation.type == 0) { //First time on this page
 		var hash = window.location.hash.replace('#', '');
-		if (hash.length == BOARD_SPACES + 1) boardStr = hash;		
+		if (hash.length >= TQBN_SIZE) boardStr = hash;		
 		else Url.setHash(''); //Clear state
 	}
 	else Url.setHash('');  //Refresh - clear state
 	
-	var game = new Game(boardStr);	
-	*/
-	var game = new Game();	
+	var game = new Game(boardStr);		
 	Stage.init(game); 
 	
 

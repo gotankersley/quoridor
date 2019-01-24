@@ -79,6 +79,7 @@ var Stage = (function() { //Stage namespace (module pattern)
 			case INVALID_DESTINATION: return 'Nope: destination not empty...';
 			case INVALID_PATH: return 'Nope: you can\'t block the other pawn\'s path entirely...';
 			case INVALID_WALL_COUNT: return 'Nope: you are out of walls to place...';
+			case INVALID_PLACE_INTERSECT: return 'Nope: this intersects an existing wall...';
 			default: return 'Nope: invalid...';
 		}
 	}
@@ -91,8 +92,7 @@ var Stage = (function() { //Stage namespace (module pattern)
 		menu = menuManager.properties;				
 		
 		board = newGame.board.copy();			
-		board.hasPath(PLAYER1);
-		board.hasPath(PLAYER2);
+
 		canvas = document.getElementById('mainCanvas');
 		canvasBounds = canvas.getBoundingClientRect(); 
 		ctx = canvas.getContext('2d');    			

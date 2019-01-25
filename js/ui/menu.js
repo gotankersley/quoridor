@@ -47,6 +47,7 @@ function MenuManager() {
 	//Display menu
 	var displayMenu = optionsMenu.addFolder('Display');	
 	displayMenu.add(this.properties, 'showLabels').onChange(this.persistChange);		
+	displayMenu.add(this.properties, 'showPath').onChange(this.persistChange);
 		
 
 	//Debug menu
@@ -54,7 +55,6 @@ function MenuManager() {
 	debugMenu.add(this.properties, 'showGrid');
 	debugMenu.add(this.properties, 'showCenters');	
 	debugMenu.add(this.properties, 'showCoordinates');
-	debugMenu.add(this.properties, 'showPath');
 	debugMenu.add(this.properties, 'pathFindingBFS').onChange(this.onChangePathFinding);
 	debugMenu.add(this.properties, 'animSpeed', 0, 5000);	
 

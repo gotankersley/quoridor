@@ -1,6 +1,9 @@
 'use strict'
 
+
 const CANVAS_SIZE = 700;
+const INFO_CANVAS_SIZE = 800;
+const INFO_OFFSET = 45;
 const GRID_SIZE = CANVAS_SIZE/FLOOR_SIZE;
 const HALF_GRID = GRID_SIZE/2;
 const WIDTH_FLOOR = GRID_SIZE - 20;
@@ -17,8 +20,7 @@ var Stage = (function() { //Stage namespace (module pattern)
 	var COLOR_HOVER_FLOOR = '#eeeeff';
 	var COLOR_HOVER_WALL = '#eeeeff';
 			
-	var COLOR_GRID = '#333';
-	//var COLOR_SUGGEST = 'aqua';
+	var COLOR_GRID = '#333';	
 	var COLOR_PLAYERS = [COLOR_PLAYER1, COLOR_PLAYER2];
 	var COLOR_PATHS = ['#FF7575', '#BDDFFF'];
 	var COLOR_PAWN_OUTLINES = ['#E62929', '#5779A5' ];	
@@ -30,8 +32,7 @@ var Stage = (function() { //Stage namespace (module pattern)
 	var WIDTH_GRID = 0.5;	
 	var WIDTH_HOVER = WIDTH_PAWN + 5;
 	var WIDTH_OUTLINE = 1;
-	var WIDTH_SELECTED = 5;
-	var WIDTH_SUGGEST = 6;
+	var WIDTH_SELECTED = 5;	
 	
 	var WIDTH_WALL_LONG = (GRID_SIZE * 2)-WIDTH_FLOOR_OFFSET;
 	var WIDTH_WALL_SHORT = 20;
@@ -54,17 +55,17 @@ var Stage = (function() { //Stage namespace (module pattern)
 	var MODE_ANIM = 1;
 		
 	var canvas;	
-	var canvasBounds;
+	var canvasBounds;	
 	
 	var ctx;	
+	var infoCtx;
 	
 	var board;
 	var cursor = new Cursor();	
 	
-	var animInfo = {};
-	var turn;
+	var animInfo = {};	
 	var mode = MODE_PLAY;
-	//var suggested = {sr:INVALID, sc:INVALID, dr:INVALID, dc:INVALID};		
+		
 			
 	function getInvalidMessage(invalidCode) {
 		switch(invalidCode) {
@@ -98,6 +99,10 @@ var Stage = (function() { //Stage namespace (module pattern)
 		canvasBounds = canvas.getBoundingClientRect(); 
 		ctx = canvas.getContext('2d');    			
 		ctx.font = 'bold 15px Verdana';
+
+		var infoCanvas = document.getElementById('infoCanvas');
+		infoCtx = infoCanvas.getContext('2d');
+		infoCtx.font = 'bold 15px Verdana';
 		
 		
 		//Event callbacks
@@ -109,8 +114,7 @@ var Stage = (function() { //Stage namespace (module pattern)
 		game.addEventListener(EVENT_INVALID, onGameInvalid.bind(this));
 		game.addEventListener(EVENT_GAME_OVER, onGameOver.bind(this));
 		game.addEventListener(EVENT_PLAYED, onGamePlayed.bind(this));
-		game.addEventListener(EVENT_BOARD_UPDATE, onGameBoardUpdate.bind(this));
-		game.addEventListener(EVENT_SUGGEST, onGameSuggest.bind(this));
+		game.addEventListener(EVENT_BOARD_UPDATE, onGameBoardUpdate.bind(this));		
 		
 		draw(); 		
 	}
@@ -235,11 +239,7 @@ var Stage = (function() { //Stage namespace (module pattern)
 	function onGameBoardUpdate(newBoard) {		
 		board = newBoard;	
 	}
-	
-	function onGameSuggest(player, move) {
-		//suggested = move;
-		//console.log(suggested);
-	}
+		
 	
 	function animMove(move, initiatingPlayer, callback) {	
 		if (initiatingPlayer == PLAYER_HUMAN || move.type != FLOOR) {		
@@ -271,7 +271,8 @@ var Stage = (function() { //Stage namespace (module pattern)
 	
 	//Drawing
 	function draw(time) {			
-		ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE+10);
+		ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+		infoCtx.clearRect(0, 0, INFO_CANVAS_SIZE, INFO_CANVAS_SIZE+20);
 		
 		//Turn
 		var turn = board.turn;		
@@ -334,6 +335,10 @@ var Stage = (function() { //Stage namespace (module pattern)
 			drawCircle(ctx, cursor.wall.x, cursor.wall.y, WIDTH_FLOOR_OFFSET, 0);
 		}
 		
+		if (menu.showPath) {
+			drawPath(PLAYER1, COLOR_PATHS[PLAYER1]);
+			drawPath(PLAYER2, COLOR_PATHS[PLAYER2]);			
+		}
 		
 		//Selected Pawn outline
 		if (cursor.selectOn) {					
@@ -348,29 +353,26 @@ var Stage = (function() { //Stage namespace (module pattern)
 			//Active pawn outline		
 			if (p == board.turn) {
 				if (mode == MODE_ANIM) continue;
-				drawPawn(pawn.c * GRID_SIZE, pawn.r * GRID_SIZE, COLOR_PAWN_OUTLINES[board.turn], WIDTH_PAWN+WIDTH_SELECTED);
+				drawPawn(pawn.c * GRID_SIZE, pawn.r * GRID_SIZE, COLOR_PAWN_OUTLINES[board.turn], WIDTH_PAWN+WIDTH_SELECTED, p, false);
 			}
-			drawPawn(pawn.c * GRID_SIZE, pawn.r * GRID_SIZE, COLOR_PLAYERS[p], WIDTH_PAWN);
+			drawPawn(pawn.c * GRID_SIZE, pawn.r * GRID_SIZE, COLOR_PLAYERS[p], WIDTH_PAWN, p, true);
 		}
 						
-		drawWallCounts();
+		drawWallCount((CANVAS_SIZE/2), CANVAS_SIZE+INFO_OFFSET+15, PLAYER1);
+		drawWallCount((CANVAS_SIZE/2), 5, PLAYER2);
 
 		//Draw debug
 		if (menu.showGrid) drawGrid();
 		if (menu.showLabels) drawLabels();
 		if (menu.showCoordinates) drawCoordinates();
-		if (menu.showPath) {
-			drawPath(PLAYER1, COLOR_PATHS[PLAYER1]);
-			drawPath(PLAYER2, COLOR_PATHS[PLAYER2]);
-		}
+		
 		
 		
 		//Animation
 		if (mode == MODE_ANIM) {
 			var x = animInfo.x;
-			var y = animInfo.y;
-			//drawPawn(x, y, COLOR_SELECTED, WIDTH_HOVER + WIDTH_OUTLINE); 
-			drawPawn(x, y, COLOR_PLAYERS[board.turn], WIDTH_PAWN);			
+			var y = animInfo.y;			
+			drawPawn(x, y, COLOR_PLAYERS[board.turn], WIDTH_PAWN, board.turn, true);			
 		}
 		
 
@@ -393,37 +395,55 @@ var Stage = (function() { //Stage namespace (module pattern)
 	}
 	
 	function drawLabels() {	
-		ctx.fillStyle = COLOR_PATH;			
-		
-		var labelOffset = HALF_GRID;
+		infoCtx.fillStyle = COLOR_PATH;					
 		for (var i = 0; i < FLOOR_SIZE; i++) {
 			var unit = i * GRID_SIZE;			
-			
-			ctx.fillText(i+1, -1, unit + labelOffset + 5);	//Vertical label
-			ctx.fillText(String.fromCharCode(65 + i), unit + labelOffset - 5, 10);	//Horizontal label
+			var offset = unit + HALF_GRID + INFO_OFFSET + 5;
+			infoCtx.fillText(i+1, INFO_OFFSET-5, offset);	//Vertical left label
+			infoCtx.fillText(i+1, CANVAS_SIZE+INFO_OFFSET-5, offset);	//Vertical right label
+
+			infoCtx.fillText(String.fromCharCode(65 + i), offset-10, INFO_OFFSET+5);	//Horizontal top label
+			infoCtx.fillText(String.fromCharCode(65 + i), offset-10, CANVAS_SIZE+INFO_OFFSET+5);	//Horizontal bottom label
 		}	
 	}
 		
-	function drawPawn(x, y, color, size) {
+	function drawPawn(x, y, color, size, turn, drawDist) {
 		
 		var pawnCenter = HALF_GRID-size;
 		ctx.fillStyle = color;
 		drawCircle(ctx, x + pawnCenter, y + pawnCenter, size, 0); 
-		
+
+		//Number on top of path
+		if (drawDist && menu.showPath) {
+			ctx.fillStyle = COLOR_PAWN_OUTLINES[turn];
+			var path = board.paths[turn].length.toString();		
+			ctx.fillText(path, x+HALF_GRID-(path.length*5), y+HALF_GRID+5);
+		}
 	}
 			
 	
 	function drawTurn(turn) {		
 		var text = (turn == PLAYER1)? 'Player 1' : 'Player 2';
 				
-		ctx.fillStyle = COLOR_PATH;
-		ctx.fillText(text, 60, CANVAS_SIZE+5);		
+		infoCtx.fillStyle = COLOR_PATH;
+		infoCtx.fillText(text, 10, 20);		
 	}
 
-	function drawWallCounts() {								
-		ctx.fillStyle = COLOR_PATH;
-		ctx.fillText(board.wallCounts[PLAYER1], CANVAS_SIZE-HALF_GRID, CANVAS_SIZE+5);	//Player 1	
-		ctx.fillText(board.wallCounts[PLAYER2],  CANVAS_SIZE-HALF_GRID, 20);	//Player 2	
+	function drawWallCount(x, y, turn) {
+		var WIDTH_WALLCOUNT = 30;
+		var wallCounts = board.wallCounts[turn];
+		var center = (WIDTH_WALLCOUNT*wallCounts)/2-20;				
+
+		//Digit(s)		
+		infoCtx.fillStyle = COLOR_PLAYERS[turn];
+		infoCtx.fillText(wallCounts, x-center+(WIDTH_WALLCOUNT*wallCounts)-5, y+15);
+
+		//Symbolic representation		
+		for (var w = 0; w < wallCounts; w++) {
+			var unit = w * WIDTH_WALLCOUNT;
+			infoCtx.fillRect(x-center+unit, y, 15, 20);	
+		}
+		
 	}
 	
 	function drawCoordinates() {
@@ -431,8 +451,8 @@ var Stage = (function() { //Stage namespace (module pattern)
 		if (cursor.type == FLOOR) coords = cursor.floor.r + ',' + cursor.floor.c;
 		else coords = cursor.wall.r + ',' + cursor.wall.c;
 
-		ctx.fillStyle = COLOR_PATH;
-		ctx.fillText('(' + coords + ')', 10, CANVAS_SIZE+5);				
+		infoCtx.fillStyle = COLOR_PATH;
+		infoCtx.fillText('(' + coords + ')', 10, INFO_CANVAS_SIZE+5);				
 	}
 		
 	function drawPath(turn, color) {
@@ -443,6 +463,7 @@ var Stage = (function() { //Stage namespace (module pattern)
 			var pos = path[p];
 			ctx.fillRect((pos.c*GRID_SIZE)+HALF_GRID-10, (pos.r*GRID_SIZE)+HALF_GRID-10+offset, 20, 20);	
 		}
+		
 
 	}
 	//Export

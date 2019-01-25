@@ -77,7 +77,8 @@ var Stage = (function() { //Stage namespace (module pattern)
 			case INVALID_TURN: return 'Nope: wrong player...';
 			case INVALID_BOUNDS: return 'Nope: must move on the board...';
 			case INVALID_DESTINATION: return 'Nope: destination not empty...';
-			case INVALID_PATH: return 'Nope: you can\'t block the other pawn\'s path entirely...';
+			case INVALID_PATH_OWN: return 'Nope: you can\'t entirely block your own pawn\'s path...';
+			case INVALID_PATH_OPP: return 'Nope: you can\'t entirely block the other pawn\'s path...';
 			case INVALID_WALL_COUNT: return 'Nope: you are out of walls to place...';
 			case INVALID_PLACE_INTERSECT: return 'Nope: this intersects an existing wall...';
 			default: return 'Nope: invalid...';
@@ -216,9 +217,9 @@ var Stage = (function() { //Stage namespace (module pattern)
 	}
 	
 	function onGamePlayed(playerType, move) {
-		//suggested = {sr:INVALID, sc:INVALID, dr:INVALID, dc:INVALID};	
+		
 		cursor.selectOn = false;
-		//animMove(move, playerType, function() {			
+		animMove(move, playerType, function() {			
 			board = game.board.copy();
 			var boardStr = board.toString();
 			Url.setHash(boardStr);
@@ -228,7 +229,7 @@ var Stage = (function() { //Stage namespace (module pattern)
 			setTimeout(function() {
 				if (!board.isGameOver()) game.play();
 			}, DELAY_MOVE); //Next move
-		//});
+		});
 	}
 	
 	function onGameBoardUpdate(newBoard) {		
@@ -241,32 +242,31 @@ var Stage = (function() { //Stage namespace (module pattern)
 	}
 	
 	function animMove(move, initiatingPlayer, callback) {	
-		//if (initiatingPlayer == PLAYER_HUMAN) {
-		//	//if (!menu.animateHuman) 
-		//	return callback();//Skip animation for human
-		//}
-		//mode = MODE_ANIM;	
-		//animInfo = {
-		//	r:move.sr,
-		//	c:move.sc,
-		//	x:(move.sc * GRID_SIZE), 
-		//	y:(move.sr * GRID_SIZE)
-		//};	
-		//
-		//var tween = new TWEEN.Tween(animInfo)
-		//.to({x:(move.dc * GRID_SIZE), y:(move.dr * GRID_SIZE)}, menu.animSpeed)	
-		//.easing(TWEEN.Easing.Quadratic.In)		
-		//.onUpdate(function() {				
-		//	if (mode != MODE_ANIM) { //Prematurely end animation				
-		//		tween.stop();
-		//		callback();
-		//	}			
-		//})
-		//.onComplete(function() {
-		//	mode = MODE_PLAY;
-		//	callback();
-		//})
-		//.start();
+		if (initiatingPlayer == PLAYER_HUMAN || move.type != FLOOR) {		
+			return callback();//Skip animation for human
+		}
+		mode = MODE_ANIM;	
+		animInfo = {
+			r:move.sr,
+			c:move.sc,
+			x:(move.sc * GRID_SIZE), 
+			y:(move.sr * GRID_SIZE)
+		};	
+		
+		var tween = new TWEEN.Tween(animInfo)
+			.to({x:(move.dc * GRID_SIZE), y:(move.dr * GRID_SIZE)}, menu.animSpeed)	
+			.easing(TWEEN.Easing.Quadratic.In)		
+			.onUpdate(function() {				
+				if (mode != MODE_ANIM) { //Prematurely end animation				
+					tween.stop();
+					callback();
+				}			
+			})
+			.onComplete(function() {
+				mode = MODE_PLAY;
+				callback();
+			})
+			.start();
 	}
 	
 	//Drawing
@@ -287,17 +287,13 @@ var Stage = (function() { //Stage namespace (module pattern)
 		}
 
 		//Hover 		
-		if (cursor.type == H_WALL) { //Horizontal
-			//if (board.walls[cursor.wall.r][cursor.wall.c] != V_WALL) {
-				ctx.fillStyle = COLOR_HOVER_WALL;
-				ctx.fillRect(cursor.wall.x - WIDTH_FLOOR, cursor.wall.y, WIDTH_WALL_LONG-WIDTH_FLOOR_OFFSET, WIDTH_WALL_SHORT);
-			//}
+		if (cursor.type == H_WALL) { //Horizontal			
+			ctx.fillStyle = COLOR_HOVER_WALL;
+			ctx.fillRect(cursor.wall.x - WIDTH_FLOOR, cursor.wall.y, WIDTH_WALL_LONG-WIDTH_FLOOR_OFFSET, WIDTH_WALL_SHORT);			
 		}
-		else if (cursor.type == V_WALL) { //Vertical
-			//if (board.walls[cursor.wall.r][cursor.wall.c] != H_WALL) {
-				ctx.fillStyle = COLOR_HOVER_WALL;
-				ctx.fillRect(cursor.wall.x, cursor.wall.y - WIDTH_FLOOR, WIDTH_WALL_SHORT, WIDTH_WALL_LONG-WIDTH_FLOOR_OFFSET);
-			//}
+		else if (cursor.type == V_WALL) { //Vertical			
+			ctx.fillStyle = COLOR_HOVER_WALL;
+			ctx.fillRect(cursor.wall.x, cursor.wall.y - WIDTH_FLOOR, WIDTH_WALL_SHORT, WIDTH_WALL_LONG-WIDTH_FLOOR_OFFSET);			
 		}
 		else if (cursor.type == FLOOR) { //Floor
 			ctx.fillStyle = COLOR_HOVER_FLOOR;
@@ -344,14 +340,16 @@ var Stage = (function() { //Stage namespace (module pattern)
 			ctx.fillStyle = COLOR_HOVER_FLOOR;
 			ctx.fillRect((cursor.selected.c*GRID_SIZE)+WIDTH_FLOOR_OFFSET, (cursor.selected.r*GRID_SIZE)+WIDTH_FLOOR_OFFSET, WIDTH_FLOOR, WIDTH_FLOOR);			
 		}
-
-		//Active pawn outline
-		var pawn = board.pawns[board.turn];			
-		drawPawn(pawn.c * GRID_SIZE, pawn.r * GRID_SIZE, COLOR_PAWN_OUTLINES[board.turn], WIDTH_PAWN+WIDTH_SELECTED);
+		
 
 		//Pawns
-		for (var p = 0; p < PLAYERS; p++) {
-			var pawn = board.pawns[p];
+		for (var p = 0; p < PLAYERS; p++) {			
+			var pawn = board.pawns[p];			
+			//Active pawn outline		
+			if (p == board.turn) {
+				if (mode == MODE_ANIM) continue;
+				drawPawn(pawn.c * GRID_SIZE, pawn.r * GRID_SIZE, COLOR_PAWN_OUTLINES[board.turn], WIDTH_PAWN+WIDTH_SELECTED);
+			}
 			drawPawn(pawn.c * GRID_SIZE, pawn.r * GRID_SIZE, COLOR_PLAYERS[p], WIDTH_PAWN);
 		}
 						
@@ -368,14 +366,15 @@ var Stage = (function() { //Stage namespace (module pattern)
 		
 		
 		//Animation
-		//if (mode == MODE_ANIM) {
-		//	var x = animInfo.x;
-		//	var y = animInfo.y;
-		//	drawPawn(x, y, COLOR_SELECTED, WIDTH_HOVER + WIDTH_OUTLINE); 
-		//	drawPawn(x, y, animColor, WIDTH_PIN); 	
-		//}
-		//
-		//TWEEN.update(time);
+		if (mode == MODE_ANIM) {
+			var x = animInfo.x;
+			var y = animInfo.y;
+			//drawPawn(x, y, COLOR_SELECTED, WIDTH_HOVER + WIDTH_OUTLINE); 
+			drawPawn(x, y, COLOR_PLAYERS[board.turn], WIDTH_PAWN);			
+		}
+		
+
+		TWEEN.update(time);
 		requestAnimationFrame(draw.bind(this)); //Repaint	
 	}
 	

@@ -32,9 +32,10 @@ MenuProperties.prototype.getDefault = function(propertyName, defaultValue) {
 function MenuManager() {
 	var PLAYER_OPTIONS = {
 		Human:PLAYER_HUMAN, 	
+		Random:PLAYER_RANDOM,		
+		Heuristic:PLAYER_HEURISTIC,		
 		Theseus:PLAYER_THESEUS,	
 		Network:PLAYER_NETWORK,				
-		//Random:PLAYER_RANDOM,		
 	};	
 		
 	this.properties = new MenuProperties();

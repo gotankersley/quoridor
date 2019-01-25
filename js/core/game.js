@@ -3,7 +3,6 @@
 #About: Class to manage players and events
 */
 //Constants
-//var GAME_REPEAT_WINDOW = 8; //Check for repeats this far back
 var PLAYER_HUMAN = 0;
 var PLAYER_RANDOM = 1;
 var PLAYER_HEURISTIC = 2;
@@ -112,15 +111,16 @@ Game.prototype.play = function() {
 	
 	//Handle no-move, and one move
 	//var moves = board.getMoves();	
-	//if (moves.length == 0) return this.onPlayed();
+	//if (moves.length == 0) throw new Error('No moves available');//return this.onPlayed();
 	//else if (moves.length == 1) return this.onPlayed(moves[0]);
 	
 	
 	//All Async - expect onPlayed callback	
 	switch (player) {		
-		case PLAYER_RANDOM: RandomPlayer.getPlay(board, this.onPlayed); break;			//Random		
-		case PLAYER_NETWORK: NetworkPlayer.getPlay(board, this.onPlayed); break;			//Network		
-		case PLAYER_THESEUS: TheseusPlayer.getPlay(board, this.onPlayed); break;			//Theseus		
+		case PLAYER_RANDOM: RandomPlayer.getPlay(board, this.onPlayed); break;	//Random		
+		case PLAYER_HEURISTIC: HeuristicPlayer.getPlay(board, this.onPlayed); break; //Heurisitc		
+		case PLAYER_NETWORK: NetworkPlayer.getPlay(board, this.onPlayed); break; //Network		
+		case PLAYER_THESEUS: TheseusPlayer.getPlay(board, this.onPlayed); break; //Theseus		
 		default: alert('Invalid player');
 	}		
 }

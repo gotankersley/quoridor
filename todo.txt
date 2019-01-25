@@ -5,6 +5,7 @@ Todo:
 - Move animation
 - DrawRemainingWalls 
 - Arena / node.js GA
+- 4 players
 
 Issues:
 - Diag jumps

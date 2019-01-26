@@ -1,3 +1,8 @@
+#messageContainer {
+	width: 800px;
+	text-align: center;
+	margin-top: 25px;
+}
 #message {	
 	display: none;
 	margin: 0;				

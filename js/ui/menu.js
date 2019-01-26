@@ -6,12 +6,14 @@ function MenuProperties() {
 
 	//Display
 	this.showLabels = this.getDefault('showLabels', true);
+	this.showPath = this.getDefault('showPath', true);
+	this.showDistance = this.getDefault('showDistance', true);
 
 	//Debug
-	this.showGrid = this.getDefault('showGrid', false);	
-	this.showCenters = this.getDefault('showCenters', false);	
-	this.showCoordinates = this.getDefault('showCoordinates', true);
-	this.showPath = this.getDefault('showPath', true);
+	this.showGrid = false;
+	this.showCenters = false;
+	this.showPositions = false;
+	this.showCoordinates = true;//this.getDefault('showCoordinates', true);
 	this.pathFindingBFS = true;
 	this.animSpeed = 500;	
 }
@@ -48,12 +50,14 @@ function MenuManager() {
 	var displayMenu = optionsMenu.addFolder('Display');	
 	displayMenu.add(this.properties, 'showLabels').onChange(this.persistChange);		
 	displayMenu.add(this.properties, 'showPath').onChange(this.persistChange);
+	displayMenu.add(this.properties, 'showDistance').onChange(this.persistChange);
 		
 
 	//Debug menu
 	var debugMenu = optionsMenu.addFolder('Debug');	
 	debugMenu.add(this.properties, 'showGrid');
 	debugMenu.add(this.properties, 'showCenters');	
+	debugMenu.add(this.properties, 'showPositions');
 	debugMenu.add(this.properties, 'showCoordinates');
 	debugMenu.add(this.properties, 'pathFindingBFS').onChange(this.onChangePathFinding);
 	debugMenu.add(this.properties, 'animSpeed', 0, 5000);	

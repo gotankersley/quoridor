@@ -12,7 +12,7 @@ const WIDTH_FLOOR_OFFSET = (GRID_SIZE-WIDTH_FLOOR)/2;
 var Stage = (function() { //Stage namespace (module pattern)						
 
 	var COLOR_WALL = '#71BF76';
-	var COLOR_PATH = '#786f5e';
+	var COLOR_OUTLINE = '#786f5e';
 	var COLOR_PLAYER1 = '#ff4242';
 	var COLOR_PLAYER2 = '#7092BE';//'#3333aa';		
 
@@ -42,6 +42,8 @@ var Stage = (function() { //Stage namespace (module pattern)
 	var KEY_Y = 89;
 	var KEY_LEFT = 37;
 	var KEY_RIGHT = 39;
+	var KEY_UP = 38;
+	var KEY_DOWN = 40;
 
 	var KEY_W = 87;
 	var KEY_A = 65;
@@ -82,7 +84,8 @@ var Stage = (function() { //Stage namespace (module pattern)
 			case INVALID_PATH_OPP: return 'Nope: you can\'t entirely block the other pawn\'s path...';
 			case INVALID_WALL_COUNT: return 'Nope: you are out of walls to place...';
 			case INVALID_PLACE_INTERSECT: return 'Nope: this intersects an existing wall...';
-			default: return 'Nope: invalid...';
+			case INVALID_SILENT: return ''; //Fail silently
+			default: return 'Nope: invalid move...';
 		}
 	}
 	
@@ -126,13 +129,13 @@ var Stage = (function() { //Stage namespace (module pattern)
 				
 		var move = INVALID;
 
-		if (e.ctrlKey || e.keyCode == KEY_LEFT || e.keyCode == KEY_RIGHT) {
+		if (e.ctrlKey ) {
 			//Undo move with Ctrl + Z
-			if (e.keyCode == KEY_Z || e.keyCode == KEY_LEFT) { 
+			if (e.keyCode == KEY_Z) { 
 				changed = game.undoMove();
 			}
 			//Redo move with Ctrl + Y
-			else if (e.keyCode == KEY_Y || e.keyCode == KEY_RIGHT) { 
+			else if (e.keyCode == KEY_Y) { 
 				changed = game.redoMove();
 			}
 			
@@ -142,10 +145,10 @@ var Stage = (function() { //Stage namespace (module pattern)
 				board = game.board;
 			}
 		}
-		else if (e.keyCode == KEY_W) move = board.getMoveFromDir(FORWARD);
-		else if (e.keyCode == KEY_A) move = board.getMoveFromDir(LEFT);
-		else if (e.keyCode == KEY_S) move = board.getMoveFromDir(BACKWARD);
-		else if (e.keyCode == KEY_D) move = board.getMoveFromDir(RIGHT);
+		else if (e.keyCode == KEY_W || e.keyCode == KEY_UP) move = board.getMoveFromDir(FORWARD);
+		else if (e.keyCode == KEY_A || e.keyCode == KEY_LEFT) move = board.getMoveFromDir(LEFT);
+		else if (e.keyCode == KEY_S || e.keyCode == KEY_DOWN) move = board.getMoveFromDir(BACKWARD);
+		else if (e.keyCode == KEY_D || e.keyCode == KEY_RIGHT) move = board.getMoveFromDir(RIGHT);
 
 		if (move != INVALID) {
 			if (board.onBoard(move.sr, move.sc) && board.onBoard(move.dr, move.dc)) {			
@@ -302,6 +305,7 @@ var Stage = (function() { //Stage namespace (module pattern)
 		}
 
 		//Walls
+		var wallPos = 0;
 		for (var r = 0; r < WALL_SIZE; r++) {
 			var y = (r* GRID_SIZE) + GRID_SIZE;
 			for (var c = 0; c < WALL_SIZE; c++) {
@@ -310,10 +314,20 @@ var Stage = (function() { //Stage namespace (module pattern)
 
 				//Wall Centers				
 				if (menu.showCenters) {
-					ctx.fillStyle = COLOR_PATH;
+					ctx.fillStyle = COLOR_OUTLINE;
 					drawCircle(ctx, x-WIDTH_FLOOR_OFFSET, y-WIDTH_FLOOR_OFFSET, WIDTH_FLOOR_OFFSET, 0 );
+					
+					if (menu.showPositions) {
+						ctx.fillStyle = '#FFFFFF';	
+						ctx.fillText(wallPos, x-5, y+5)
+					}
+					
 				}
-
+				else if (menu.showPositions) {					
+					ctx.fillStyle = 'darkblue';	
+					ctx.fillText(wallPos, x-5, y+5)					
+				}
+									
 	
 				//Walls
 				if (wall == H_WALL){ //Horizontal
@@ -325,6 +339,7 @@ var Stage = (function() { //Stage namespace (module pattern)
 					ctx.fillRect(x-WIDTH_FLOOR_OFFSET, y - WIDTH_FLOOR-WIDTH_FLOOR_OFFSET, WIDTH_WALL_SHORT, WIDTH_WALL_LONG-WIDTH_FLOOR_OFFSET);
 				}
 				
+			wallPos++;
 			}
 		}
 		
@@ -365,7 +380,7 @@ var Stage = (function() { //Stage namespace (module pattern)
 		if (menu.showGrid) drawGrid();
 		if (menu.showLabels) drawLabels();
 		if (menu.showCoordinates) drawCoordinates();
-		
+		if (menu.showPositions) drawPositions();
 		
 		
 		//Animation
@@ -395,7 +410,7 @@ var Stage = (function() { //Stage namespace (module pattern)
 	}
 	
 	function drawLabels() {	
-		infoCtx.fillStyle = COLOR_PATH;					
+		infoCtx.fillStyle = COLOR_OUTLINE;					
 		for (var i = 0; i < FLOOR_SIZE; i++) {
 			var unit = i * GRID_SIZE;			
 			var offset = unit + HALF_GRID + INFO_OFFSET + 5;
@@ -414,7 +429,7 @@ var Stage = (function() { //Stage namespace (module pattern)
 		drawCircle(ctx, x + pawnCenter, y + pawnCenter, size, 0); 
 
 		//Number on top of path
-		if (drawDist && menu.showPath) {
+		if (drawDist && menu.showDistance) {
 			ctx.fillStyle = COLOR_PAWN_OUTLINES[turn];
 			var path = board.paths[turn].length.toString();		
 			ctx.fillText(path, x+HALF_GRID-(path.length*5), y+HALF_GRID+5);
@@ -425,8 +440,20 @@ var Stage = (function() { //Stage namespace (module pattern)
 	function drawTurn(turn) {		
 		var text = (turn == PLAYER1)? 'Player 1' : 'Player 2';
 				
-		infoCtx.fillStyle = COLOR_PATH;
+		infoCtx.fillStyle = COLOR_OUTLINE;
 		infoCtx.fillText(text, 10, 20);		
+	}
+
+	function drawPositions() {
+		ctx.fillStyle = '#b0b0b0';
+		var i = 0;
+		for (var r = 0; r < FLOOR_SIZE; r++) {
+			var y = (r+1) *GRID_SIZE;
+			for (var c = 0; c < FLOOR_SIZE; c++) {
+				var x = (c+1) * GRID_SIZE;
+				ctx.fillText(i++, x-35, y-15);
+			}
+		}
 	}
 
 	function drawWallCount(x, y, turn) {
@@ -451,7 +478,7 @@ var Stage = (function() { //Stage namespace (module pattern)
 		if (cursor.type == FLOOR) coords = cursor.floor.r + ',' + cursor.floor.c;
 		else coords = cursor.wall.r + ',' + cursor.wall.c;
 
-		infoCtx.fillStyle = COLOR_PATH;
+		infoCtx.fillStyle = COLOR_OUTLINE;
 		infoCtx.fillText('(' + coords + ')', 10, INFO_CANVAS_SIZE+5);				
 	}
 		

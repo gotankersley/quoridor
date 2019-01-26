@@ -171,6 +171,18 @@ Board.prototype.canJump = function(turn, sr, sc, dr, dc) {
 			if (oppPawn.c == sc+dir && oppPawn.r == dr) return true;
 		}
 	}
+	//else if (deltaR == 1 && deltaC == 1) { //diagonal
+	//	var dirR = dr-sr;
+	//	var dirC = dc-sc;
+	//	if (!this.collidesWithWall(sr+dirR, sc+dirC, dr, sc)) {			
+	//		if (oppPawn.r == sr+dirR && oppPawn.c == sc+dirC) {
+	//			if (this.collidesWithWall(sr, sc, dr+dirR, sc+dirC) || !) {	
+//
+	//			}
+//
+	//		}
+	//	}
+	//}
 	return false;
 }
 
@@ -223,7 +235,7 @@ Board.prototype.validateMove = function(sr, sc, dr, dc) {
 		
 	//Moving
 	if (deltaSum <= 0) return INVALID_MOVE;
-	else if (deltaSum == 2) { //Jump
+	else if (deltaSum == 2 ) { //Jump
 		if (!this.canJump(this.turn, sr, sc, dr, dc)) return INVALID_MOVE_DIAGONAL;			
 	} 
 	else if (deltaSum != 1) return INVALID_MOVE;

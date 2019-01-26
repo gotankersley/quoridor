@@ -35,8 +35,8 @@ function MenuManager() {
 	var PLAYER_OPTIONS = {
 		Human:PLAYER_HUMAN, 	
 		Random:PLAYER_RANDOM,		
-		Heuristic:PLAYER_HEURISTIC,		
-		Theseus:PLAYER_THESEUS,	
+		Weak:PLAYER_HEURISTIC,		
+		//Theseus:PLAYER_THESEUS,	
 		Network:PLAYER_NETWORK,				
 	};	
 		

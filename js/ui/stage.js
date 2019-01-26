@@ -125,6 +125,10 @@ var Stage = (function() { //Stage namespace (module pattern)
 	
 	//Mouse and Keyboard Events	
 	function onKeyDown(e) {	
+		if (mode == MODE_ANIM) { //Snap to position
+			mode = MODE_PLAY;
+			return;
+		}
 		var changed = false;		
 				
 		var move = INVALID;

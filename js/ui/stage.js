@@ -73,9 +73,8 @@ var Stage = (function() { //Stage namespace (module pattern)
 		switch(invalidCode) {
 			case VALID: return 'Valid';
 			case INVALID_MOVE: return 'Nope: can only move one square...'; 
-			case INVALID_MOVE_WALL: return 'Nope: unable to move through wall...'; 
-			case INVALID_MOVE_DIAGONAL: return 'Nope: unable to move diagonal, unless jump...'; 
-			case INVALID_JUMP: return 'Nope: jumps must be over a pawn or diagonal with a wall...'; 
+			case INVALID_MOVE_WALL: return 'Nope: unable to move through wall...'; 			
+			case INVALID_JUMP: return 'Nope: jumps must be over a pawn or diagonal with a wall behind...'; 
 			case INVALID_SOURCE: return 'Nope: not your pawn...'; 
 			case INVALID_TURN: return 'Nope: wrong player...';
 			case INVALID_BOUNDS: return 'Nope: must move on the board...';

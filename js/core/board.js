@@ -4,7 +4,6 @@ const INVALID_JUMP = 1;
 const INVALID_SOURCE = 2;
 const INVALID_MOVE = 3;
 const INVALID_MOVE_WALL = 4;
-const INVALID_MOVE_DIAGONAL = 5;
 const INVALID_TURN = 6;
 const INVALID_BOUNDS = 7;
 const INVALID_DESTINATION = 8;
@@ -171,18 +170,24 @@ Board.prototype.canJump = function(turn, sr, sc, dr, dc) {
 			if (oppPawn.c == sc+dir && oppPawn.r == dr) return true;
 		}
 	}
-	//else if (deltaR == 1 && deltaC == 1) { //diagonal
-	//	var dirR = dr-sr;
-	//	var dirC = dc-sc;
-	//	if (!this.collidesWithWall(sr+dirR, sc+dirC, dr, sc)) {			
-	//		if (oppPawn.r == sr+dirR && oppPawn.c == sc+dirC) {
-	//			if (this.collidesWithWall(sr, sc, dr+dirR, sc+dirC) || !) {	
-//
-	//			}
-//
-	//		}
-	//	}
-	//}
+	else if (deltaR == 1 && deltaC == 1) { //diagonal
+		var jumpR = dr-sr;
+		var jumpC = dc-sc;
+		var dirR = 0;
+		var dirC = 0;
+		if (oppPawn.r == sr) dirC = oppPawn.c-sc;
+		else dirR = oppPawn.r-sr;
+		
+		if (this.onBoard(dr, dc)) {
+			if (oppPawn.r == sr+dirR && oppPawn.c == sc+dirC) { //Pawn in front
+				if (!this.collidesWithWall(sr+dirR, sc+dirC, dr, sc)) {	//No wall betwixt pawns
+					if (!this.onBoard(oppPawn.r+dirR, oppPawn.c+dirC)) return true; //edge case
+					else if (this.collidesWithWall(oppPawn.r, oppPawn.c, oppPawn.r+dirR, oppPawn.c+dirC)) return true;	//Wall behind opp pawn						
+					
+				}
+			}
+		}
+	}
 	return false;
 }
 
@@ -236,12 +241,12 @@ Board.prototype.validateMove = function(sr, sc, dr, dc) {
 	//Moving
 	if (deltaSum <= 0) return INVALID_MOVE;
 	else if (deltaSum == 2 ) { //Jump
-		if (!this.canJump(this.turn, sr, sc, dr, dc)) return INVALID_MOVE_DIAGONAL;			
+		if (!this.canJump(this.turn, sr, sc, dr, dc)) return INVALID_JUMP;	
+		else return VALID;		
 	} 
 	else if (deltaSum != 1) return INVALID_MOVE;
-	
-	//Not 'else if'
-	if (this.collidesWithWall(sr, sc, dr, dc)) return INVALID_MOVE_WALL;						
+		
+	else if (this.collidesWithWall(sr, sc, dr, dc)) return INVALID_MOVE_WALL;						
 
 						
 	return VALID;
@@ -322,7 +327,24 @@ Board.prototype.getMoves = function() {
 	var dir = {r:oppPawn.r-pawn.r, c:oppPawn.c-pawn.r};
 	var jump = {r:oppPawn.r+(1*dir.r), c:oppPawn.c+(1*dir.c)};
 	if(this.onBoard(jump.r, jump.c) && this.canJump(turn, pawn.r, pawn.c, jump.r, jump.c)) {
-		moves.push({sr:pawn.r, sc:pawn.c, dr:jump.r, dc:jump.c, type:FLOOR});
+		moves.push({sr:pawn.r, sc:pawn.c, dr:jump.r, dc:jump.c, type:FLOOR}); //Straight jump
+		
+		if (dir.c == 0) {
+			if (this.onBoard(oppPawn.r, oppPawn.c-1) && this.canJump(pawn.r, pawn.c, oppPawn.r, oppPawn.c-1)) {
+				moves.push({sr:pawn.r, sc:pawn.c, dr:oppPawn.r, dc:oppPawn.c-1, type:FLOOR}); //Diag jump
+			}
+			if (this.onBoard(oppPawn.r, oppPawn.c+1) && this.canJump(pawn.r, pawn.c, oppPawn.r, oppPawn.c+1)) {
+				moves.push({sr:pawn.r, sc:pawn.c, dr:oppPawn.r, dc:oppPawn.c+1, type:FLOOR}); //Diag jump
+			}
+		}
+		else {
+			if (this.onBoard(oppPawn.r-1, oppPawn.c) && this.canJump(pawn.r, pawn.c, oppPawn.r-1, oppPawn.c)) {
+				moves.push({sr:pawn.r, sc:pawn.c, dr:oppPawn.r-1, dc:oppPawn.c, type:FLOOR}); //Diag jump
+			}
+			if (this.onBoard(oppPawn.r+1, oppPawn.c) && this.canJump(pawn.r, pawn.c, oppPawn.r+1, oppPawn.c)) {
+				moves.push({sr:pawn.r, sc:pawn.c, dr:oppPawn.r+1, dc:oppPawn.c, type:FLOOR}); //Diag jump
+			}
+		}
 	}
 	
 	
@@ -457,9 +479,11 @@ Board.prototype.getPathDFS = function(turn) {
 			if (deltaR >= 0 && deltaR < FLOOR_SIZE && deltaC >= 0 && deltaC < FLOOR_SIZE) {
 				if (!this.breadcrumbs[deltaR][deltaC]) {
 					
+					//Jump
 					if (oppPawn.r == deltaR && oppPawn.c == deltaC) {
 						var jumpR = deltaR + dir.r;
 						var jumpC = deltaC + dir.c;
+						//Straight
 						if (jumpR >= 0 && jumpR < FLOOR_SIZE && jumpC >= 0 && jumpC < FLOOR_SIZE) {
 							if (this.canJump(turn, first.r, first.c, jumpR, jumpC)) {
 								queue.push({r:jumpR, c:jumpC, path:first.path+dir.dir+dir.dir});								
@@ -467,7 +491,33 @@ Board.prototype.getPathDFS = function(turn) {
 								this.breadcrumbs[jumpR][jumpC] = true;
 							}							
 						}
+						//Diagonal
+						if (dir.c == 0) {
+							if (this.onBoard(oppPawn.r, oppPawn.c-1) && this.canJump(turn, first.r, first.c, oppPawn.r, oppPawn.c-1)) {
+								queue.push({r:oppPawn.r, c:oppPawn.c-1, path:first.path+dir.dir+this.getTurnedDir(0,-1)});								
+								this.breadcrumbs[deltaR][deltaC] = true;
+								this.breadcrumbs[oppPawn.r][oppPawn.c-1] = true;								
+							}
+							if (this.onBoard(oppPawn.r, oppPawn.c+1) && this.canJump(turn, first.r, first.c, oppPawn.r, oppPawn.c+1)) {
+								queue.push({r:oppPawn.r, c:oppPawn.c+1, path:first.path+dir.dir+this.getTurnedDir(0,1)});								
+								this.breadcrumbs[deltaR][deltaC] = true;
+								this.breadcrumbs[oppPawn.r][oppPawn.c+1] = true;
+							}
+						}
+						else {
+							if (this.onBoard(oppPawn.r-1, oppPawn.c) && this.canJump(turn, first.r, first.c, oppPawn.r-1, oppPawn.c)) {
+								queue.push({r:oppPawn.r-1, c:oppPawn.c, path:first.path+dir.dir+this.getTurnedDir(-1,0)});								
+								this.breadcrumbs[deltaR][deltaC] = true;
+								this.breadcrumbs[oppPawn.r-1][oppPawn.c] = true;								
+							}
+							if (this.onBoard(oppPawn.r+1, oppPawn.c) && this.canJump(turn, first.r, first.c, oppPawn.r+1, oppPawn.c)) {
+								queue.push({r:oppPawn.r+1, c:oppPawn.c, path:first.path+dir.dir+this.getTurnedDir(1,0)});								
+								this.breadcrumbs[deltaR][deltaC] = true;
+								this.breadcrumbs[oppPawn.r+1][oppPawn.c] = true;
+							}
+						}
 					}
+					//Move
 					else {
 											
 						if (!this.collidesWithWall(first.r, first.c, deltaR, deltaC)) {
@@ -537,6 +587,7 @@ Board.prototype.getPathBFS = function(turn) {
 					if (oppPawn.r == deltaR && oppPawn.c == deltaC) {
 						var jumpR = deltaR + dir.r;
 						var jumpC = deltaC + dir.c;
+						//Straight
 						if (jumpR >= 0 && jumpR < FLOOR_SIZE && jumpC >= 0 && jumpC < FLOOR_SIZE) {
 							if (this.canJump(turn, first.r, first.c, jumpR, jumpC)) {
 								queue.push({r:jumpR, c:jumpC, path:first.path+dir.dir+dir.dir});								
@@ -544,6 +595,31 @@ Board.prototype.getPathBFS = function(turn) {
 								this.breadcrumbs[deltaR][deltaC] = true;
 							}
 							
+						}
+						//Diagonal
+						if (dir.c == 0) {
+							if (this.onBoard(oppPawn.r, oppPawn.c-1) && this.canJump(turn, first.r, first.c, oppPawn.r, oppPawn.c-1)) {
+								queue.push({r:oppPawn.r, c:oppPawn.c-1, path:first.path+dir.dir+this.getTurnedDir(0,-1)});								
+								this.breadcrumbs[deltaR][deltaC] = true;
+								this.breadcrumbs[oppPawn.r][oppPawn.c-1] = true;								
+							}
+							if (this.onBoard(oppPawn.r, oppPawn.c+1) && this.canJump(turn, first.r, first.c, oppPawn.r, oppPawn.c+1)) {
+								queue.push({r:oppPawn.r, c:oppPawn.c+1, path:first.path+dir.dir+this.getTurnedDir(0,1)});								
+								this.breadcrumbs[deltaR][deltaC] = true;
+								this.breadcrumbs[oppPawn.r][oppPawn.c+1] = true;
+							}
+						}
+						else {
+							if (this.onBoard(oppPawn.r-1, oppPawn.c) && this.canJump(turn, first.r, first.c, oppPawn.r-1, oppPawn.c)) {
+								queue.push({r:oppPawn.r-1, c:oppPawn.c, path:first.path+dir.dir+this.getTurnedDir(-1,0)});								
+								this.breadcrumbs[deltaR][deltaC] = true;
+								this.breadcrumbs[oppPawn.r-1][oppPawn.c] = true;								
+							}
+							if (this.onBoard(oppPawn.r+1, oppPawn.c) && this.canJump(turn, first.r, first.c, oppPawn.r+1, oppPawn.c)) {
+								queue.push({r:oppPawn.r+1, c:oppPawn.c, path:first.path+dir.dir+this.getTurnedDir(1,0)});								
+								this.breadcrumbs[deltaR][deltaC] = true;
+								this.breadcrumbs[oppPawn.r+1][oppPawn.c] = true;
+							}
 						}
 					}
 					else {
@@ -683,6 +759,16 @@ Board.prototype.qmnToMove = function(qmn) {
 	return INVALID;
 }
 
+Board.prototype.getTurnedDir = function (r, c) {
+	if (r == 0) {
+		if (c == 1) return 'R';					
+		else if (c == -1) return 'L';								
+	}
+	else { //c == 0
+		if (r == 1) return 'B';		
+		else if (r == -1) return 'F';			
+	}
+}
 Board.prototype.getMoveFromDir = function(dir) {		
 	//Convenience function to move pawn with WASD
 	var turn = this.turn;

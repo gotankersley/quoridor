@@ -17,4 +17,25 @@ Names:
 - Labyrinth
 - yarn
 
+Heuristic:
+path overlap / same path as opponent
+walls to left
+walls to right
+walls in front
+naive dist
+in corner
+in center
+*walls remaining
+*min path dist
+* of end row unblocked v / h
+multiple paths avail/single path
+path includes jump (edge jump / diag jump)
+number of can't places
+pawn moves avail
 
+
+metadata:
+- # of moves into game
+- total # of walls in play
+- total # of walls not in play
+- ponder time

@@ -180,7 +180,7 @@ Board.prototype.canJump = function(turn, sr, sc, dr, dc) {
 		
 		if (this.onBoard(dr, dc)) {
 			if (oppPawn.r == sr+dirR && oppPawn.c == sc+dirC) { //Pawn in front
-				if (!this.collidesWithWall(sr+dirR, sc+dirC, dr, sc)) {	//No wall betwixt pawns
+				if (!this.collidesWithWall(sr, sc, oppPawn.r, oppPawn.c) && !this.collidesWithWall(sr+dirR, sc+dirC, dr, sc) && !this.collidesWithWall(oppPawn.r, oppPawn.c, dr, dc)) {	//No wall betwixt pawns
 					if (!this.onBoard(oppPawn.r+dirR, oppPawn.c+dirC)) return true; //edge case
 					else if (this.collidesWithWall(oppPawn.r, oppPawn.c, oppPawn.r+dirR, oppPawn.c+dirC)) return true;	//Wall behind opp pawn						
 					
@@ -255,6 +255,7 @@ Board.prototype.validateMove = function(sr, sc, dr, dc) {
 Board.prototype.validatePlace = function(r, c, wallType) {
 	var oppTurn = +(!this.turn);
 	if (this.wallCounts[this.turn] <= 0) return INVALID_WALL_COUNT;
+	else if (r < 0 || r >= WALL_SIZE || c < 0 || c >= WALL_SIZE) return INVALID;
 	else if (this.intersectsWall(r, c, wallType)) return INVALID_PLACE_INTERSECT;	
 
 	//Check for path - after it's placed
@@ -324,26 +325,25 @@ Board.prototype.getMoves = function() {
 	if (this.validateMove(pawn.r, pawn.c, pawn.r, pawn.c-1) == VALID) moves.push({sr:pawn.r, sc:pawn.c, dr:pawn.r,dc:pawn.c-1, type:FLOOR});
 
 	//Jumps
-	var dir = {r:oppPawn.r-pawn.r, c:oppPawn.c-pawn.r};
+	var dir = {r:oppPawn.r-pawn.r, c:oppPawn.c-pawn.c};
 	var jump = {r:oppPawn.r+(1*dir.r), c:oppPawn.c+(1*dir.c)};
 	if(this.onBoard(jump.r, jump.c) && this.canJump(turn, pawn.r, pawn.c, jump.r, jump.c)) {
-		moves.push({sr:pawn.r, sc:pawn.c, dr:jump.r, dc:jump.c, type:FLOOR}); //Straight jump
-		
-		if (dir.c == 0) {
-			if (this.onBoard(oppPawn.r, oppPawn.c-1) && this.canJump(pawn.r, pawn.c, oppPawn.r, oppPawn.c-1)) {
-				moves.push({sr:pawn.r, sc:pawn.c, dr:oppPawn.r, dc:oppPawn.c-1, type:FLOOR}); //Diag jump
-			}
-			if (this.onBoard(oppPawn.r, oppPawn.c+1) && this.canJump(pawn.r, pawn.c, oppPawn.r, oppPawn.c+1)) {
-				moves.push({sr:pawn.r, sc:pawn.c, dr:oppPawn.r, dc:oppPawn.c+1, type:FLOOR}); //Diag jump
-			}
+		moves.push({sr:pawn.r, sc:pawn.c, dr:jump.r, dc:jump.c, type:FLOOR}); //Straight jump				
+	}
+	if (dir.c == 0) {
+		if (this.onBoard(oppPawn.r, oppPawn.c-1) && this.canJump(pawn.r, pawn.c, oppPawn.r, oppPawn.c-1)) {
+			moves.push({sr:pawn.r, sc:pawn.c, dr:oppPawn.r, dc:oppPawn.c-1, type:FLOOR}); //Diag jump
 		}
-		else {
-			if (this.onBoard(oppPawn.r-1, oppPawn.c) && this.canJump(pawn.r, pawn.c, oppPawn.r-1, oppPawn.c)) {
-				moves.push({sr:pawn.r, sc:pawn.c, dr:oppPawn.r-1, dc:oppPawn.c, type:FLOOR}); //Diag jump
-			}
-			if (this.onBoard(oppPawn.r+1, oppPawn.c) && this.canJump(pawn.r, pawn.c, oppPawn.r+1, oppPawn.c)) {
-				moves.push({sr:pawn.r, sc:pawn.c, dr:oppPawn.r+1, dc:oppPawn.c, type:FLOOR}); //Diag jump
-			}
+		if (this.onBoard(oppPawn.r, oppPawn.c+1) && this.canJump(pawn.r, pawn.c, oppPawn.r, oppPawn.c+1)) {
+			moves.push({sr:pawn.r, sc:pawn.c, dr:oppPawn.r, dc:oppPawn.c+1, type:FLOOR}); //Diag jump
+		}
+	}
+	else {
+		if (this.onBoard(oppPawn.r-1, oppPawn.c) && this.canJump(pawn.r, pawn.c, oppPawn.r-1, oppPawn.c)) {
+			moves.push({sr:pawn.r, sc:pawn.c, dr:oppPawn.r-1, dc:oppPawn.c, type:FLOOR}); //Diag jump
+		}
+		if (this.onBoard(oppPawn.r+1, oppPawn.c) && this.canJump(pawn.r, pawn.c, oppPawn.r+1, oppPawn.c)) {
+			moves.push({sr:pawn.r, sc:pawn.c, dr:oppPawn.r+1, dc:oppPawn.c, type:FLOOR}); //Diag jump
 		}
 	}
 	

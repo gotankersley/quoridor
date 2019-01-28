@@ -180,7 +180,7 @@ Board.prototype.canJump = function(turn, sr, sc, dr, dc) {
 		
 		if (this.onBoard(dr, dc)) {
 			if (oppPawn.r == sr+dirR && oppPawn.c == sc+dirC) { //Pawn in front
-				if (!this.collidesWithWall(sr, sc, oppPawn.r, oppPawn.c) && !this.collidesWithWall(sr+dirR, sc+dirC, dr, sc) && !this.collidesWithWall(oppPawn.r, oppPawn.c, dr, dc)) {	//No wall betwixt pawns
+				if (!this.collidesWithWall(sr, sc, oppPawn.r, oppPawn.c) && !this.collidesWithWall(sr+dirR, sc+dirC, dr, dc) && !this.collidesWithWall(oppPawn.r, oppPawn.c, dr, dc)) {	//No wall betwixt pawns
 					if (!this.onBoard(oppPawn.r+dirR, oppPawn.c+dirC)) return true; //edge case
 					else if (this.collidesWithWall(oppPawn.r, oppPawn.c, oppPawn.r+dirR, oppPawn.c+dirC)) return true;	//Wall behind opp pawn						
 					

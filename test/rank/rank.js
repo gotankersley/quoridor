@@ -186,7 +186,10 @@ class Population {
 	}
 	
 	rank8(DIV) { //Octinary
-		
+		if (!isPOT(POPULATION)) {
+			alert('This algorithm requires population to be a power of 2');
+			return this.rank4();
+		}
 		var cur = 0;
 		var next = 1;
 		var pools = [new Array(POPULATION), new Array(POPULATION)];
@@ -300,7 +303,7 @@ class Population {
 }
 
 function onChangePopulation(val) {
-	POPULATION = val;
+	POPULATION = parseInt(val);
 	run();
 
 }
@@ -308,6 +311,18 @@ function onChangePopulation(val) {
 function onChangeRankAlg(val) {
 	rankAlg = parseInt(val);
 	run();
+}
+
+function isSelected(n) {
+	if (rankAlg == n) return ' selected="selected"';
+	else return '';
+}
+
+function isPOT(n) { //Power of 2
+	if (typeof n !== 'number') 
+		 return 'Not a number'; 
+   
+	   return n && (n & (n - 1)) === 0;
 }
 
 //Start
@@ -335,11 +350,6 @@ function run() {
 	population.display();
 	sorttable.makeSortable(document.getElementById('info-table'));
 	
-}
-
-function isSelected(n) {
-	if (rankAlg == n) return ' selected="selected"';
-	else return '';
 }
 
 

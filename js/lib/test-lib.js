@@ -10,7 +10,7 @@ function assert(actual, expected, msg, target) {
 			<div>Error (${testNum}): ${msg}</div>
 			<div>Actual: ${actual}</div>
 			<div>Expected: ${expected}</div>`,
-			target:target
+			target:typeof (target) == 'undefined'? actual : target
 		};
 	}
 	testNum++;	

@@ -12,8 +12,6 @@
 <script src="js/lib/tween.js"></script>
 <script src="js/lib/draw-lib.js"></script>
 <script src="js/lib/url-lib.js"></script>
-<script src="js/lib/bit-lib.js"></script>
-<script src="js/lib/rand-lib.js"></script>
 
 <script src="js/core/board.js"></script>
 
@@ -37,7 +35,7 @@
 	
 	Url.init(function(e) {
 	var hash = window.location.hash.replace('#', '');		
-		if (hash.length >= TQBN_SIZE) {
+		if (hash.length >= 10) {
 			var newBoard = new Board(hash);			
 			game.updateBoard(newBoard);
 		}

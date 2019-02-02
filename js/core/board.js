@@ -34,7 +34,7 @@ const CHAR_NO_WALL = 'N';
 const CHAR_H_WALL = 'H';
 const CHAR_V_WALL = 'V';
 
-const TQBN_SIZE = 73;
+const TQBN_SIZE = 73; //Min with RLE
 const MAX_SEARCH_ITERATIONS = 200;
 var SEARCH_PATH_TYPE = 'B';
 
@@ -71,7 +71,12 @@ const MOVE_DELTAS_BY_DIR = [
 ];
 
 const ADVANCE_DIR = [1, -1];
-
+const B64 = [ //Custom charset to put 0-1, [A-F], where you'd expect
+	'0','1','2','3','4','5','6','7','8','9',
+	'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+	'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
+	'+','-'
+];
 
 //Class Board 
 function Board(boardStr, findPath) {	
@@ -729,6 +734,14 @@ Board.prototype.qmnFromRC = function(pos) {
 	return String.fromCharCode(65+pos.c) + (pos.r+1);
 }
 
+Board.prototype.qmnMove = function(qmn) {	
+	var move = this.qmnToMove(qmn);
+	var moveCode = this.makeMove(move);
+	if (moveCode == VALID) this.changeTurn();
+	return moveCode;
+	
+}
+
 Board.prototype.qmnToMove = function(qmn) {	
 	//Example E2, or A2V	
 	if (qmn.length == 2) { //Move pawn
@@ -785,6 +798,8 @@ Board.prototype.getMoveFromDir = function(dir) {
 	}
 	else return move;
 }
+
+
 
 
 //End class Board

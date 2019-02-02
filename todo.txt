@@ -32,6 +32,7 @@ multiple paths avail/single path
 path includes jump (edge jump / diag jump)
 number of can't places
 pawn moves avail
+gap(s)
 
 
 metadata:

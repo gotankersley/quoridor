@@ -15,6 +15,7 @@ class Team {
 		this.total++;
 		otherTeam.total++;
 		
+		//Ties - not currently allowed
 		//if (this.realVal == otherTeam.realVal) {
 		//	this.wins++;
 		//	otherTeam.wins++;
@@ -49,13 +50,17 @@ class Population {
 		this.cost = 0;
 		if (rankAlg == 1) this.rank1(); //Everybody plays everybody once
 		else if (rankAlg == 2) this.rank2(); //Binary
-		else if (rankAlg == 4) this.rank4(); //Quaternary
+		else if (rankAlg == 4) this.rank4(); //Quaternary		
 		else if (rankAlg == 8) this.rank8(8); //Octonary
 		else if (rankAlg == 5) this.rank5(4); //Rand 4 samples
 		else if (rankAlg == 6) this.rank5(8); //Rand 8 samples			
-		else if (rankAlg == 7) {
-			var samples = prompt('How many samples?');
-			this.rank5(samples); //Rand n samples		
+		else if (rankAlg == 7) { //Rand n samples	
+			var samples = parseInt(prompt('How many samples?'));
+			this.rank5(samples); 	
+		}
+		else if (rankAlg == 3) { //Brackets - N
+			var div = parseInt(prompt('How many divisions?'));
+			this.rank8(div); 
 		}
 		else alert('Invalid rank algorithm');
 	}	
@@ -339,6 +344,7 @@ function run() {
 	document.write('<option value="2"' + isSelected(2) + '>Brackets - Binary</option>');
 	document.write('<option value="4"' + isSelected(4) + '>Brackets - Quaternary</option>');
 	document.write('<option value="8"' + isSelected(8) + '>Brackets - Octonary</option>');
+	document.write('<option value="3"' + isSelected(3) + '>Brackets - N</option>');
 	document.write('<option value="5"' + isSelected(5) + '>Random - each plays 4 others</option>');
 	document.write('<option value="6"' + isSelected(6) + '>Random - each plays 8 others</option>');
 	document.write('<option value="7"' + isSelected(7) + '>Random - each plays N others</option>');

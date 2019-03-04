@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8">		  
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quoridor - Generate Walls Between</title>
+<link rel="shortcut icon" href="../../img/favicon.ico" />	
+
+<script src="../../js/core/board.js"></script>
+<body>
+<script>
+const EOL = '<br/>';
+var board = new Board();
+
+
+
+var output = '';
+for (var p = 0; p < FLOOR_SPACES; p++) {
+	var r = Math.floor(p/FLOOR_SIZE);
+	var c = p % FLOOR_SIZE;
+	
+	var moves = [];
+	
+	//NORTH 
+	if (canMove(r, c, r-1, c)) { 		
+		if (c-1 >= 0) moves.push(((r-1)*WALL_SIZE)+(c-1));   //wall pos 1
+		else moves.push(((r-1)*WALL_SIZE)+(c));   		
+		
+		if (c < WALL_SIZE) moves.push(((r-1)*WALL_SIZE)+(c));  //wall pos 2
+		else moves.push(((r-1)*WALL_SIZE)+(c-1));   
+		
+	}
+	else {  moves.push(-1); moves.push(-1);}
+			
+	
+	//SOUTH
+	if (canMove(r, c, r+1, c)) { 		
+		
+		if (c-1 >= 0) moves.push(((r)*WALL_SIZE)+(c-1));   //wall pos 1
+		else moves.push(((r)*WALL_SIZE)+(c));   		
+		
+		if (c < WALL_SIZE) moves.push(((r)*WALL_SIZE)+(c));  //wall pos 2
+		else moves.push(((r)*WALL_SIZE)+(c-1));   		
+	}
+	else { moves.push(-1); moves.push(-1);}
+	
+	//EAST
+	if (canMove(r, c, r, c+1)) {				
+		
+		if (r-1 >= 0) moves.push(((r-1)*WALL_SIZE)+c);   //wall pos 1
+		else moves.push((r*WALL_SIZE)+(c+1));   		
+		
+		if (r < WALL_SIZE) moves.push((r*WALL_SIZE)+c);  //wall pos 2
+		else moves.push(((r-1)*WALL_SIZE)+(c+1));   		
+	}
+	else {  moves.push(-1); moves.push(-1);}
+
+	//WEST
+	if (canMove(r, c, r, c-1)) { 				
+		
+		if (r-1 >= 0) moves.push(((r-1)*WALL_SIZE)+(c-1));   //wall pos 1
+		else moves.push((r*WALL_SIZE)+(c-1));   		
+		
+		if (r < WALL_SIZE) moves.push((r*WALL_SIZE)+(c-1));  //wall pos 2
+		else moves.push(((r-1)*WALL_SIZE)+(c-1));    
+	}
+	else {  moves.push(-1); moves.push(-1);}
+		
+	for (var m = 0; m < moves.length; m++) {
+		output += moves[m] + ',';
+	}
+	output += ', //' + p + EOL;	
+	//output += '],';
+}
+
+
+document.write('const WALLS_BETWEEN = [' + EOL);
+//document.write(output.replace(/,\]/g, ']')); //Remove Trailing comma
+document.write(output.replace(/,,/g, ',')); //Remove Trailing comma
+document.write('];' + EOL);
+
+
+function canMove(sr, sc, dr, dc) {
+
+	var deltaR = Math.abs(sr-dr);
+	var deltaC = Math.abs(sc-dc);
+	var deltaSum = deltaR + deltaC;
+
+	if (!board.onBoard(sr, sc) || !board.onBoard(dr, dc)) return false;	//Out of bounds
+
+		
+	//Moving
+	if (deltaSum <= 0) return false;
+	else if (deltaSum == 2 ) return false;	
+	else if (deltaSum != 1) return false;
+		
+	return true;
+}
+
+
+</script>
+</body>
+</html>

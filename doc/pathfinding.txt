@@ -1,0 +1,12 @@
+WRT to Pathfinding:
+
+- DFS and BFS have the same fail cost
+- MonteCarlo might can use DFS only?
+- Even if you can verify that a path exists with DFS, for a scoring heuristic, you'll probably still need the min path calculated
+- DFS uses stack, and can be implemented recursively
+- BFS uses queue, and pretty much has to be iterative
+- A* uses priority queue, (which often uses a binary heap to implement)
+- Pawns can't block the path, (with invisible edge wall rules), and so don't need to be considered in hasPath, (although they can effectively stalemate)
+* However, with Pawn jumping, it can change the min value path distance by 1 less
+- G*: There is a shortcut we can use to as a heuristic for finding the min path - specifically it will never be less than the straight vertical length
+- G*: DFS search, but on finding a path, pop the stack, and explore any paths that could be less than the theoretically min, or cur min

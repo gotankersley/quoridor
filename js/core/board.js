@@ -1,5 +1,4 @@
 const VALID = 0;
-const INVALID = -1;
 const INVALID_JUMP = 1;
 const INVALID_SOURCE = 2;
 const INVALID_MOVE = 3;
@@ -14,27 +13,20 @@ const INVALID_PLACE_INTERSECT = 12;
 const INVALID_SILENT = 13; //Discretion is the better part of valor
 
 
-const WALL_SIZE = 8;
-const WALL_SPACES = 64;
-const FLOOR_SIZE = 9;
-const FLOOR_SPACES = 81;
 const CENTER_SPACE = 4;
 
-const PLAYER1 = 0;
-const PLAYER2 = 1;
-const PLAYERS = 2
 const EMPTY = -1; 
 
 const NO_WALL = 0;
-const V_WALL = 1;
-const H_WALL = 2;
+const H_WALL = 1;
+const V_WALL = 2;
 const FLOOR = 3;
 
 const CHAR_NO_WALL = 'N';
 const CHAR_H_WALL = 'H';
 const CHAR_V_WALL = 'V';
 
-const TQBN_SIZE = 73; //Min with RLE
+const TQBN_SIZE = 73; 
 const MAX_SEARCH_ITERATIONS = 200;
 var SEARCH_PATH_TYPE = 'B';
 
@@ -45,7 +37,8 @@ const BACKWARD = 3;
 
 const STARTING_WALLS = 10;
 const STARTING_ROWS = [FLOOR_SIZE-1, 0];
-const ENDING_ROWS = [0, FLOOR_SIZE-1];
+
+const ENDING_WALL_ROWS = [0, WALL_SIZE-1];
 const SEARCH_DIRS_BY_PLAYER = [
 	//Player1
 	[
@@ -71,12 +64,12 @@ const MOVE_DELTAS_BY_DIR = [
 ];
 
 const ADVANCE_DIR = [1, -1];
-const B64 = [ //Custom charset to put 0-1, [A-F], where you'd expect
-	'0','1','2','3','4','5','6','7','8','9',
-	'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
-	'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
-	'+','-'
-];
+//const B64 = [ //Custom charset to put 0-1, [A-F], where you'd expect
+//	'0','1','2','3','4','5','6','7','8','9',
+//	'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+//	'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
+//	'+','-'
+//];
 
 //Class Board 
 function Board(boardStr, findPath) {	
@@ -153,7 +146,7 @@ Board.prototype.canSelect = function(r, c) {
 
 Board.prototype.isGameOver = function() {
 	//Reached the opposite end row
-	if (this.pawns[this.turn].r == ENDING_ROWS[this.turn]) return true;		
+	if (this.pawns[this.turn].r == WIN_ROWS[this.turn]) return true;		
 	else return false;
 }
 
@@ -176,8 +169,6 @@ Board.prototype.canJump = function(turn, sr, sc, dr, dc) {
 		}
 	}
 	else if (deltaR == 1 && deltaC == 1) { //diagonal
-		var jumpR = dr-sr;
-		var jumpC = dc-sc;
 		var dirR = 0;
 		var dirC = 0;
 		if (oppPawn.r == sr) dirC = oppPawn.c-sc;
@@ -275,6 +266,12 @@ Board.prototype.validatePlace = function(r, c, wallType) {
 	else return VALID;
 }
 
+Board.prototype.removeWall = function(r,c){
+	
+	this.walls[r][c] = NO_WALL;
+
+}
+
 Board.prototype.intersectsWall = function(r,c, wallType) {
 				
 	if (this.walls[r][c] != NO_WALL) return true;	//Occupied
@@ -305,7 +302,7 @@ Board.prototype.collidesWithWall = function(sr, sc, dr, dc) {
 
 
 
-Board.prototype.getMoves = function() {	
+Board.prototype.getMoves = function(moveType) {	
 	
 	var turn = this.turn;
 	var oppTurn = +(!turn);
@@ -323,39 +320,43 @@ Board.prototype.getMoves = function() {
 			pathCache[p][pos.r + ',' + pos.c] = true;
 		}
 	}
-	//Pawn moves
-	if (this.validateMove(pawn.r, pawn.c, pawn.r+1, pawn.c) == VALID) moves.push({sr:pawn.r, sc:pawn.c, dr:pawn.r+1,dc:pawn.c, type:FLOOR});
-	if (this.validateMove(pawn.r, pawn.c, pawn.r-1, pawn.c) == VALID) moves.push({sr:pawn.r, sc:pawn.c, dr:pawn.r-1,dc:pawn.c, type:FLOOR});
-	if (this.validateMove(pawn.r, pawn.c, pawn.r, pawn.c+1) == VALID) moves.push({sr:pawn.r, sc:pawn.c, dr:pawn.r,dc:pawn.c+1, type:FLOOR});
-	if (this.validateMove(pawn.r, pawn.c, pawn.r, pawn.c-1) == VALID) moves.push({sr:pawn.r, sc:pawn.c, dr:pawn.r,dc:pawn.c-1, type:FLOOR});
+	
+	if (moveType == FLOOR || typeof(moveType) == 'undefined') {
+		//Pawn moves
+		if (this.validateMove(pawn.r, pawn.c, pawn.r+1, pawn.c) == VALID) moves.push({sr:pawn.r, sc:pawn.c, dr:pawn.r+1,dc:pawn.c, type:FLOOR});
+		if (this.validateMove(pawn.r, pawn.c, pawn.r-1, pawn.c) == VALID) moves.push({sr:pawn.r, sc:pawn.c, dr:pawn.r-1,dc:pawn.c, type:FLOOR});
+		if (this.validateMove(pawn.r, pawn.c, pawn.r, pawn.c+1) == VALID) moves.push({sr:pawn.r, sc:pawn.c, dr:pawn.r,dc:pawn.c+1, type:FLOOR});
+		if (this.validateMove(pawn.r, pawn.c, pawn.r, pawn.c-1) == VALID) moves.push({sr:pawn.r, sc:pawn.c, dr:pawn.r,dc:pawn.c-1, type:FLOOR});
 
-	//Jumps
-	var dir = {r:oppPawn.r-pawn.r, c:oppPawn.c-pawn.c};
-	var jump = {r:oppPawn.r+(1*dir.r), c:oppPawn.c+(1*dir.c)};
-	if(this.onBoard(jump.r, jump.c) && this.canJump(turn, pawn.r, pawn.c, jump.r, jump.c)) {
-		moves.push({sr:pawn.r, sc:pawn.c, dr:jump.r, dc:jump.c, type:FLOOR}); //Straight jump				
-	}
-	if (dir.c == 0) {
-		if (this.onBoard(oppPawn.r, oppPawn.c-1) && this.canJump(pawn.r, pawn.c, oppPawn.r, oppPawn.c-1)) {
-			moves.push({sr:pawn.r, sc:pawn.c, dr:oppPawn.r, dc:oppPawn.c-1, type:FLOOR}); //Diag jump
+		//Jumps
+		var dir = {r:oppPawn.r-pawn.r, c:oppPawn.c-pawn.c};
+		var jump = {r:oppPawn.r+(1*dir.r), c:oppPawn.c+(1*dir.c)};
+		if(this.onBoard(jump.r, jump.c) && this.canJump(turn, pawn.r, pawn.c, jump.r, jump.c)) {
+			moves.push({sr:pawn.r, sc:pawn.c, dr:jump.r, dc:jump.c, type:FLOOR}); //Straight jump				
 		}
-		if (this.onBoard(oppPawn.r, oppPawn.c+1) && this.canJump(pawn.r, pawn.c, oppPawn.r, oppPawn.c+1)) {
-			moves.push({sr:pawn.r, sc:pawn.c, dr:oppPawn.r, dc:oppPawn.c+1, type:FLOOR}); //Diag jump
+		if (dir.c == 0) {
+			if (this.onBoard(oppPawn.r, oppPawn.c-1) && this.canJump(pawn.r, pawn.c, oppPawn.r, oppPawn.c-1)) {
+				moves.push({sr:pawn.r, sc:pawn.c, dr:oppPawn.r, dc:oppPawn.c-1, type:FLOOR}); //Diag jump
+			}
+			if (this.onBoard(oppPawn.r, oppPawn.c+1) && this.canJump(pawn.r, pawn.c, oppPawn.r, oppPawn.c+1)) {
+				moves.push({sr:pawn.r, sc:pawn.c, dr:oppPawn.r, dc:oppPawn.c+1, type:FLOOR}); //Diag jump
+			}
 		}
-	}
-	else {
-		if (this.onBoard(oppPawn.r-1, oppPawn.c) && this.canJump(pawn.r, pawn.c, oppPawn.r-1, oppPawn.c)) {
-			moves.push({sr:pawn.r, sc:pawn.c, dr:oppPawn.r-1, dc:oppPawn.c, type:FLOOR}); //Diag jump
-		}
-		if (this.onBoard(oppPawn.r+1, oppPawn.c) && this.canJump(pawn.r, pawn.c, oppPawn.r+1, oppPawn.c)) {
-			moves.push({sr:pawn.r, sc:pawn.c, dr:oppPawn.r+1, dc:oppPawn.c, type:FLOOR}); //Diag jump
+		else {
+			if (this.onBoard(oppPawn.r-1, oppPawn.c) && this.canJump(pawn.r, pawn.c, oppPawn.r-1, oppPawn.c)) {
+				moves.push({sr:pawn.r, sc:pawn.c, dr:oppPawn.r-1, dc:oppPawn.c, type:FLOOR}); //Diag jump
+			}
+			if (this.onBoard(oppPawn.r+1, oppPawn.c) && this.canJump(pawn.r, pawn.c, oppPawn.r+1, oppPawn.c)) {
+				moves.push({sr:pawn.r, sc:pawn.c, dr:oppPawn.r+1, dc:oppPawn.c, type:FLOOR}); //Diag jump
+			}
 		}
 	}
 	
 	
 	//Place moves
 	if (this.wallCounts[turn] <= 0) return moves; //No places available
-
+	else if (moveType == FLOOR) return moves;
+	
 	for (var r = 0; r < WALL_SIZE; r++) {
 		for (var c = 0; c < WALL_SIZE; c++) {
 			//Horizontal walls
@@ -456,12 +457,13 @@ Board.prototype.getPathDFS = function(turn) {
 
 	var searchDirs = SEARCH_DIRS_BY_PLAYER[turn];
 	var queue = [{r:pawn.r, c:pawn.c, path:''}];
+	this.breadcrumbs[pawn.r][pawn.c] = true;
 	var iterations = 0;
 	while (queue.length) {
 		
 		var first = queue.pop();
 		
-		if (first.r == ENDING_ROWS[turn]) {
+		if (first.r == WIN_ROWS[turn]) {
 			var pathStr = first.path;
 			var path = [];
 			var pos = {r:pawn.r, c:pawn.c};
@@ -482,55 +484,11 @@ Board.prototype.getPathDFS = function(turn) {
 			var deltaR = first.r + dir.r;
 			var deltaC = first.c + dir.c;			
 			if (deltaR >= 0 && deltaR < FLOOR_SIZE && deltaC >= 0 && deltaC < FLOOR_SIZE) {
-				if (!this.breadcrumbs[deltaR][deltaC]) {
-					
-					//Jump
-					if (oppPawn.r == deltaR && oppPawn.c == deltaC) {
-						var jumpR = deltaR + dir.r;
-						var jumpC = deltaC + dir.c;
-						//Straight
-						if (jumpR >= 0 && jumpR < FLOOR_SIZE && jumpC >= 0 && jumpC < FLOOR_SIZE) {
-							if (this.canJump(turn, first.r, first.c, jumpR, jumpC)) {
-								queue.push({r:jumpR, c:jumpC, path:first.path+dir.dir+dir.dir});								
-								this.breadcrumbs[deltaR][deltaC] = true;
-								this.breadcrumbs[jumpR][jumpC] = true;
-							}							
-						}
-						//Diagonal
-						if (dir.c == 0) {
-							if (this.onBoard(oppPawn.r, oppPawn.c-1) && this.canJump(turn, first.r, first.c, oppPawn.r, oppPawn.c-1)) {
-								queue.push({r:oppPawn.r, c:oppPawn.c-1, path:first.path+dir.dir+this.getTurnedDir(0,-1)});								
-								this.breadcrumbs[deltaR][deltaC] = true;
-								this.breadcrumbs[oppPawn.r][oppPawn.c-1] = true;								
-							}
-							if (this.onBoard(oppPawn.r, oppPawn.c+1) && this.canJump(turn, first.r, first.c, oppPawn.r, oppPawn.c+1)) {
-								queue.push({r:oppPawn.r, c:oppPawn.c+1, path:first.path+dir.dir+this.getTurnedDir(0,1)});								
-								this.breadcrumbs[deltaR][deltaC] = true;
-								this.breadcrumbs[oppPawn.r][oppPawn.c+1] = true;
-							}
-						}
-						else {
-							if (this.onBoard(oppPawn.r-1, oppPawn.c) && this.canJump(turn, first.r, first.c, oppPawn.r-1, oppPawn.c)) {
-								queue.push({r:oppPawn.r-1, c:oppPawn.c, path:first.path+dir.dir+this.getTurnedDir(-1,0)});								
-								this.breadcrumbs[deltaR][deltaC] = true;
-								this.breadcrumbs[oppPawn.r-1][oppPawn.c] = true;								
-							}
-							if (this.onBoard(oppPawn.r+1, oppPawn.c) && this.canJump(turn, first.r, first.c, oppPawn.r+1, oppPawn.c)) {
-								queue.push({r:oppPawn.r+1, c:oppPawn.c, path:first.path+dir.dir+this.getTurnedDir(1,0)});								
-								this.breadcrumbs[deltaR][deltaC] = true;
-								this.breadcrumbs[oppPawn.r+1][oppPawn.c] = true;
-							}
-						}
-					}
-					//Move
-					else {
-											
-						if (!this.collidesWithWall(first.r, first.c, deltaR, deltaC)) {
-							queue.push({r:deltaR, c:deltaC, path:first.path+dir.dir});							
-							this.breadcrumbs[deltaR][deltaC] = true;
-						}
-						
-					}
+				if (!this.breadcrumbs[deltaR][deltaC]) {										
+					if (!this.collidesWithWall(first.r, first.c, deltaR, deltaC)) {
+						queue.push({r:deltaR, c:deltaC, path:first.path+dir.dir});							
+						this.breadcrumbs[deltaR][deltaC] = true;
+					}										
 				}
 			}
 		}
@@ -562,11 +520,12 @@ Board.prototype.getPathBFS = function(turn) {
 
 	var searchDirs = SEARCH_DIRS_BY_PLAYER[turn];
 	var queue = [{r:pawn.r, c:pawn.c, path:''}];
+	this.breadcrumbs[pawn.r][pawn.c] = true;
 	var iterations = 0;
 	while (queue.length) {
 		var first = queue.shift();		
 		
-		if (first.r == ENDING_ROWS[turn]) {
+		if (first.r == WIN_ROWS[turn]) {
 			var pathStr = first.path;
 			var path = [];
 			var pos = {r:pawn.r, c:pawn.c};

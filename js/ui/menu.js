@@ -5,14 +5,14 @@ function MenuProperties() {
 	this.player2 = PLAYER_HUMAN;
 
 	//Display
-	this.showLabels = this.getDefault('showLabels', true);
+	this.showLabels = this.getDefault('showLabels', false);
 	this.showPath = this.getDefault('showPath', true);
 	this.showDistance = this.getDefault('showDistance', true);
 
 	//Debug
 	this.showGrid = false;
 	this.showCenters = false;
-	this.showPositions = false;
+	this.showPositions = this.getDefault('showPositions', true);
 	this.showCoordinates = true;//this.getDefault('showCoordinates', true);
 	this.pathFindingBFS = true;
 	this.animSpeed = 500;	
@@ -36,7 +36,8 @@ function MenuManager() {
 		Human:PLAYER_HUMAN, 	
 		Random:PLAYER_RANDOM,		
 		Weak:PLAYER_HEURISTIC,		
-		//Theseus:PLAYER_THESEUS,	
+		Theseus:PLAYER_THESEUS,	
+		Minotaur:PLAYER_ALPHABETA,	
 		Network:PLAYER_NETWORK,				
 	};	
 		
@@ -57,9 +58,8 @@ function MenuManager() {
 	var debugMenu = optionsMenu.addFolder('Debug');	
 	debugMenu.add(this.properties, 'showGrid');
 	debugMenu.add(this.properties, 'showCenters');	
-	debugMenu.add(this.properties, 'showPositions');
+	debugMenu.add(this.properties, 'showPositions').onChange(this.persistChange);
 	debugMenu.add(this.properties, 'showCoordinates');
-	debugMenu.add(this.properties, 'pathFindingBFS').onChange(this.onChangePathFinding);
 	debugMenu.add(this.properties, 'animSpeed', 0, 5000);	
 
 	//Links menu
@@ -101,6 +101,7 @@ MenuManager.prototype.onChangePlayer = function(val) {
 	var configButton = document.querySelectorAll('.config-button.' + this.property)[0];
 	if (configButton) {
 		if (selectedPlayer == PLAYER_NETWORK) configButton.style.visibility = 'visible';		
+		else if (selectedPlayer == PLAYER_RANDOM) configButton.style.visibility = 'visible';		
 	}
 	else configButton.style.visibility = 'hidden';
 
@@ -108,11 +109,6 @@ MenuManager.prototype.onChangePlayer = function(val) {
 	game.play();
 }
 
-
-MenuManager.prototype.onChangePathFinding = function(val) {	
-	if (val) SEARCH_PATH_TYPE = 'B';
-	else SEARCH_PATH_TYPE = 'D';
-}
 
 MenuManager.prototype.persistChange = function(val) {
 	var propertyName = MENU_PREFIX + this.property;	

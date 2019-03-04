@@ -8,6 +8,7 @@ var PLAYER_RANDOM = 1;
 var PLAYER_HEURISTIC = 2;
 var PLAYER_THESEUS = 3;
 var PLAYER_NETWORK = 4;
+var PLAYER_ALPHABETA = 4;
 
 
 var EVENT_INVALID = 0;
@@ -67,6 +68,7 @@ Game.prototype.undoMove = function() {
 		this.board = new Board(boardStr);		
 		this.board.turn = +(!oldTurn);		
 		Url.setHash(boardStr);
+		this.gameEvents[EVENT_BOARD_UPDATE](this.board);
 		return true;		
 	}
 	return false;
@@ -83,7 +85,9 @@ Game.prototype.redoMove = function() {
 		Url.setHash(savedStr);
 		
 		//Check for Game over		
-		if (this.board.isGameOver()) this.onGameOver(this.board.turn);				
+		if (this.board.isGameOver()) this.onGameOver(this.board.turn);	
+		
+		this.gameEvents[EVENT_BOARD_UPDATE](this.board);
 		return true;
 	}
 	return false;
@@ -118,7 +122,8 @@ Game.prototype.play = function() {
 	//All Async - expect onPlayed callback	
 	switch (player) {		
 		case PLAYER_RANDOM: RandomPlayer.getPlay(board, this.onPlayed); break;	//Random		
-		case PLAYER_HEURISTIC: HeuristicPlayer.getPlay(board, this.onPlayed); break; //Heurisitc		
+		case PLAYER_HEURISTIC: HeuristicPlayer.getPlay(board, this.onPlayed); break; //Heuristic		
+		case PLAYER_ALPHABETA: AlphaBetaPlayer.getPlay(board, this.onPlayed); break; //Heuristic
 		case PLAYER_NETWORK: NetworkPlayer.getPlay(board, this.onPlayed); break; //Network		
 		case PLAYER_THESEUS: TheseusPlayer.getPlay(board, this.onPlayed); break; //Theseus		
 		default: alert('Invalid player');
@@ -149,6 +154,7 @@ Game.prototype.onPlayed = function(move) {
 
 Game.prototype.onPlayerConfig = function(player) {
 	if (this.players[player] == PLAYER_NETWORK) NetworkPlayer.configPlayer(player);
+	else if (this.players[player] == PLAYER_RANDOM) RandomPlayer.configPlayer(player);
 			
 }
 

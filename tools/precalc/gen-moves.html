@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8">		  
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quoridor - Generate Moves</title>
+<link rel="shortcut icon" href="../../img/favicon.ico" />	
+
+<script src="../../js/core/board.js"></script>
+<body>
+<script>
+const EOL = '<br/>';
+var board = new Board();
+
+const NORTH = 0; 
+const SOUTH = 1;
+const EAST = 2;
+const WEST = 3;
+
+
+var output = '';
+for (var p = 0; p < FLOOR_SPACES; p++) {
+	var r = Math.floor(p/FLOOR_SIZE);
+	var c = p % FLOOR_SIZE;
+	
+	var moves = [];
+	if (canMove(r, c, r+1, c)) {moves.push(getPos(r+1, c)); moves.push(SOUTH); } //Down
+	if (canMove(r, c, r-1, c)) {moves.push(getPos(r-1, c)); moves.push(NORTH); } //Up
+	if (canMove(r, c, r, c+1)) {moves.push(getPos(r, c+1)); moves.push(EAST); } //Right
+	if (canMove(r, c, r, c-1)) {moves.push(getPos(r, c-1)); moves.push(WEST); } //Left
+	
+	
+	output += '[';
+	for (var m = 0; m < moves.length; m++) {
+		output += moves[m] + ',';
+	}
+	output += '], //' + p + EOL;
+	//output += '],';
+}
+
+//document.write('<pre>');
+document.write('const MOVES_BY_POS = [' + EOL);
+document.write(output.replace(/,\]/g, ']')); //Remove Trailing comma
+document.write('];' + EOL);
+//document.write('</pre>');
+
+
+function canMove(sr, sc, dr, dc) {
+
+	var deltaR = Math.abs(sr-dr);
+	var deltaC = Math.abs(sc-dc);
+	var deltaSum = deltaR + deltaC;
+
+	if (!board.onBoard(sr, sc) || !board.onBoard(dr, dc)) return false;	//Out of bounds
+
+		
+	//Moving
+	if (deltaSum <= 0) return false;
+	else if (deltaSum == 2 ) return false;	
+	else if (deltaSum != 1) return false;
+		
+	return true;
+}
+
+function getPos(r, c) {
+	return (r*FLOOR_SIZE)+c;
+}
+</script>
+</body>
+</html>

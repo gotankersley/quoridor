@@ -1,21 +1,34 @@
 Todo:
-- board-lite
-- optimized pathfinding - g*
 - 3D views
-
 - Arena / node.js GA
 - 4 players
-- wasd / arrow keys
+- account for jumps in Min path
 
-Issues:
-- Diag jumps
-- Diag jumps on end row = yes
+
+Questions:
+- Does only placing walls adjacent limit strength?
+- Is there a good random weight for % moves / % places?
+- Can A/B depth use fractional 0.1, or 0.5 for moving?
+- Learning states?
+- 
+
+
+deriveMove
+getMoves
+getSmartRandom
+
 
 Names:
 - Status Quo
 - Minotaur
 - Labyrinth
 - yarn
+- Troll / TrollKing
+- aMAZEing
+- U-Turn
+- Orcrist / Glamdring
+- Daedalus 
+
 
 Heuristic:
 path overlap / same path as opponent
@@ -25,14 +38,19 @@ walls in front
 naive dist
 in corner
 in center
+position weight
 *walls remaining
 *min path dist
 * of end row unblocked v / h
+* length of max path
 multiple paths avail/single path
 path includes jump (edge jump / diag jump)
 number of can't places
 pawn moves avail
 gap(s)
+area can move
+"trollability of remaing path"
+ratio between naive and min path = obstacles
 
 
 metadata:
@@ -40,3 +58,9 @@ metadata:
 - total # of walls in play
 - total # of walls not in play
 - ponder time
+
+States:
+http://localhost/quoridor/#NNNHNVNNNNNHNHNHNNNNHNHNNNNVHNVNNNNNVNNNHNNNNHNVNNNNNNVHNNNNNNHV1D302C300
+http://localhost/quoridor/#NNNHNVNNNHNVHNHNHVNNNNNNNNHNNVNNVHNVNNNNNVNNNVNNNNHVHNNHNNNNNNNN2I201H400
+http://localhost/quoridor/#NNNNNNNNNNVNNNNHNNNHNHNNNNNNVNNNNNNVNHNHNNNNNNNNNNNNNNNNNNNNHNNN1G405H406 -> place
+http://glenix:8080/quoridor/#NNNNNNNNNNNNNNNNNNHNHNNNNVNVNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN1D410E306

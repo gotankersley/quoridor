@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8">		  
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quoridor - Generate Neighbors</title>
+<link rel="shortcut icon" href="../../img/favicon.ico" />	
+
+<script src="../../js/core/board-lite/board-data.js"></script>
+<script src="../../js/core/board.js"></script>
+<body>
+<script>
+const EOL = '<br/>';
+var board = new Board();
+
+var TYPE = TYPE_VERT;
+
+var output = '';
+for (var p = 0; p < WALL_SPACES; p++) {
+	var r = Math.floor(p/WALL_SIZE);
+	var c = p % WALL_SIZE;    
+    
+    var moves = [];
+    //Horizontal
+    if (TYPE == TYPE_HORZ) {
+        if (valid(r, c-2)) { moves.push(getPos(r, c-2)); moves.push(TYPE_HORZ); }
+        if (valid(r, c+2)) { moves.push(getPos(r, c+2)); moves.push(TYPE_HORZ); }
+
+        if (valid(r-1, c)) { moves.push(getPos(r-1, c)); moves.push(TYPE_VERT); }
+        if (valid(r+1, c)) { moves.push(getPos(r+1, c)); moves.push(TYPE_VERT); }
+
+        if (valid(r, c-1)) { moves.push(getPos(r, c-1)); moves.push(TYPE_VERT); }
+        if (valid(r, c+1)) { moves.push(getPos(r, c+1)); moves.push(TYPE_VERT); }
+
+        if (valid(r-1, c-1)) { moves.push(getPos(r-1, c-1)); moves.push(TYPE_VERT); }
+        if (valid(r+1, c-1)) { moves.push(getPos(r+1, c-1)); moves.push(TYPE_VERT); }
+
+        if (valid(r-1, c+1)) { moves.push(getPos(r-1, c+1)); moves.push(TYPE_VERT); }
+        if (valid(r+1, c+1)) { moves.push(getPos(r+1, c+1)); moves.push(TYPE_VERT); }
+        
+
+    }
+    
+    //Vertical
+    else {
+        if (valid(r-2, c)) { moves.push(getPos(r-2, c)); moves.push(TYPE_VERT); }
+        if (valid(r+2, c)) { moves.push(getPos(r+2, c)); moves.push(TYPE_VERT); }
+
+        if (valid(r-1, c)) { moves.push(getPos(r-1, c)); moves.push(TYPE_HORZ); }
+        if (valid(r+1, c)) { moves.push(getPos(r+1, c)); moves.push(TYPE_HORZ); }
+
+        if (valid(r, c-1)) { moves.push(getPos(r, c-1)); moves.push(TYPE_HORZ); }
+        if (valid(r, c+1)) { moves.push(getPos(r, c+1)); moves.push(TYPE_HORZ); }
+
+        if (valid(r-1, c-1)) { moves.push(getPos(r-1, c-1)); moves.push(TYPE_HORZ); }
+        if (valid(r+1, c-1)) { moves.push(getPos(r+1, c-1)); moves.push(TYPE_HORZ); }
+
+        if (valid(r-1, c+1)) { moves.push(getPos(r-1, c+1)); moves.push(TYPE_HORZ); }
+        if (valid(r+1, c+1)) { moves.push(getPos(r+1, c+1)); moves.push(TYPE_HORZ); }
+    }
+	
+
+	output += '[';
+	for (var m = 0; m < moves.length; m++) {
+		output += moves[m] + ',';
+	}
+	output += '], //' + p + EOL;
+	//output += '],';
+}
+
+
+document.write('const NEIGHBOR_WALLS = [' + EOL);
+document.write(output.replace(/,,/g, ',')); //Remove Trailing comma
+document.write('];' + EOL);
+
+function getPos(r, c) {
+    return (r*WALL_SIZE)+c;
+}
+
+function valid(r, c) {
+    if (r >= 0 && r < WALL_SIZE && c >= 0 && c < WALL_SIZE) return true;
+    else return false;
+}
+
+
+</script>
+</body>
+</html>

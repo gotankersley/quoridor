@@ -49,12 +49,16 @@ var Stage = (function() { //Stage namespace (module pattern)
 	var KEY_A = 65;
 	var KEY_S = 83;
 	var KEY_D = 68;
+
+	var KEY_1 = 49;
+	var KEY_2 = 50;
 	
 	var DELAY_MOVE = 500;
 	var DELAY_WIN_MESSAGE = 100;
 		
 	var MODE_PLAY = 0;
 	var MODE_ANIM = 1;
+	var MODE_EDIT = 2;
 		
 	var canvas;	
 	var canvasBounds;	
@@ -110,6 +114,7 @@ var Stage = (function() { //Stage namespace (module pattern)
 		//Event callbacks
 		canvas.addEventListener('click', onMouseClick.bind(this), false);
 		window.addEventListener('keydown', onKeyDown.bind(this), false);				
+		window.addEventListener('keyup', onKeyUp.bind(this), false);		
 		canvas.addEventListener('mousemove', onMouseMove.bind(this), false);		
 		
 		//Game event callbacks
@@ -127,26 +132,53 @@ var Stage = (function() { //Stage namespace (module pattern)
 		if (mode == MODE_ANIM) { //Snap to position
 			mode = MODE_PLAY;
 			return;
-		}
-		var changed = false;		
+		}			
 				
+		
 		var move = INVALID;
+		var updateBoard = false;
 
 		if (e.ctrlKey ) {
+			
 			//Undo move with Ctrl + Z
-			if (e.keyCode == KEY_Z) { 
-				changed = game.undoMove();
-			}
+			if (e.keyCode == KEY_Z) game.undoMove();
+							
 			//Redo move with Ctrl + Y
-			else if (e.keyCode == KEY_Y) { 
-				changed = game.redoMove();
+			else if (e.keyCode == KEY_Y) game.redoMove(); 
+				
+			else if (e.keyCode == KEY_1) {
+				board.turn = PLAYER1;
+				game.updateBoard(board);
+				e.preventDefault();
+			}
+			else if (e.keyCode == KEY_2) {
+				board.turn = PLAYER2;
+				game.updateBoard(board);
+				e.preventDefault();
 			}
 			
-			//Update state
-			if (changed) {
-
-				board = game.board;
+			else if (e.keyCode == KEY_UP) {
+				move = board.getMoveFromDir(FORWARD);
+				board.makeMove(move);
+				game.updateBoard(board);
 			}
+			else if (e.keyCode == KEY_LEFT) {
+				move = board.getMoveFromDir(LEFT);
+				board.makeMove(move);
+				game.updateBoard(board);
+			}
+			else if (e.keyCode == KEY_DOWN) {
+				move = board.getMoveFromDir(BACKWARD);
+				board.makeMove(move);
+				game.updateBoard(board);
+			}
+			else if (e.keyCode == KEY_RIGHT) {
+				move = board.getMoveFromDir(RIGHT);
+				board.makeMove(move);
+				game.updateBoard(board);
+			}
+
+			else mode = MODE_EDIT;
 		}
 		else if (e.keyCode == KEY_W || e.keyCode == KEY_UP) move = board.getMoveFromDir(FORWARD);
 		else if (e.keyCode == KEY_A || e.keyCode == KEY_LEFT) move = board.getMoveFromDir(LEFT);
@@ -158,9 +190,13 @@ var Stage = (function() { //Stage namespace (module pattern)
 				game.onPlayed(move);
 			}
 		}
+
+
 	}
 	
-
+	function onKeyUp(e) {	
+		if (mode == MODE_EDIT) mode = MODE_PLAY;
+	}
 
 	function onMouseMove(e) {	
 		var x = e.clientX - canvasBounds.left; 
@@ -185,7 +221,7 @@ var Stage = (function() { //Stage namespace (module pattern)
 		if (!board.onBoard(cursor.floor.r, cursor.floor.c)) return;
 		
 		var turn = board.turn;
-		if (game.players[turn] != PLAYER_HUMAN) return;
+		if (game.players[turn] != PLAYER_HUMAN) return; //AI's turn
 						
 		//Pawn moving on floor		
 		var wallType = cursor.type;
@@ -196,7 +232,14 @@ var Stage = (function() { //Stage namespace (module pattern)
 		}
 		//Wall placement
 		else if (wallType == V_WALL || wallType == H_WALL) {
-			game.onPlayed({r:cursor.wall.r, c:cursor.wall.c, type:wallType});			
+			if (mode == MODE_EDIT) {
+				var wr = cursor.wall.r;
+				var wc = cursor.wall.c;
+				if (board.walls[wr][wc] != NO_WALL) board.removeWall(cursor.wall.r, cursor.wall.c);
+				else board.walls[wr][wc] = wallType;
+				game.updateBoard(board);
+			}
+			else game.onPlayed({r:cursor.wall.r, c:cursor.wall.c, type:wallType});			
 		}
 	}			
 	

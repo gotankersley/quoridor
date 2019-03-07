@@ -3,7 +3,7 @@ Todo:
 - Arena / node.js GA
 - 4 players
 - account for jumps in Min path
-
+- show who played what wall
 
 Questions:
 - Does only placing walls adjacent limit strength?
@@ -28,29 +28,37 @@ Names:
 - U-Turn
 - Orcrist / Glamdring
 - Daedalus 
-
+- Shinglepox
 
 Heuristic:
-path overlap / same path as opponent
-walls to left
-walls to right
-walls in front
+
+walls behind / in front
 naive dist
-in corner
-in center
-position weight
+
 *walls remaining
 *min path dist
-* of end row unblocked v / h
-* length of max path
-multiple paths avail/single path
+? of end row unblocked v / h
+? length of max path / worst path (if player uses all current walls)
+
 path includes jump (edge jump / diag jump)
 number of can't places
 pawn moves avail
-gap(s)
-area can move
-"trollability of remaing path"
-ratio between naive and min path = obstacles
+path includes home row (bonus / penalty)
+cachePath - walls = unblockable places
+negative distance on path 
+which pawn further down the board
+wall count ratio between players
+does blocking length own path?
+
+probably not:
+- area can move
+- ratio between naive and min path = obstacles
+- path overlap / same path as opponent
+- in corner / in center
+- gap(s)
+- position weight
+- multiple paths avail/single path (useful if can define)
+
 
 
 metadata:
@@ -64,3 +72,12 @@ http://localhost/quoridor/#NNNHNVNNNNNHNHNHNNNNHNHNNNNVHNVNNNNNVNNNHNNNNHNVNNNNN
 http://localhost/quoridor/#NNNHNVNNNHNVHNHNHVNNNNNNNNHNNVNNVHNVNNNNNVNNNVNNNNHVHNNHNNNNNNNN2I201H400
 http://localhost/quoridor/#NNNNNNNNNNVNNNNHNNNHNHNNNNNNVNNNNNNVNHNHNNNNNNNNNNNNNNNNNNNNHNNN1G405H406 -> place
 http://glenix:8080/quoridor/#NNNNNNNNNNNNNNNNNNHNHNNNNVNVNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN1D410E306
+
+http://localhost/quoridor/#NNNNNNNNNNHNHNNNNNNNVNNNNNNNNNNNNNNNVVNNNNNHNHNHNNNNNNNNNNNHNVNN1E304F506
+HNHVVNNHNNHNHNHNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNHVNNNNNNHNNNN1G408E801
+VNNNNNNNNNNHVHNVNNNNNHNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNVHNNN2F306F706
+NNNNNNNNNNNNNNNNNNNNNNNNNNVHNNNNNNNNNNNNNNVNVNNNNNNHNVNNNNNNNNNN1E406D608
+
+http://localhost/quoridor/#HNNNNNNNNHVNVNNNNHNNNNNNHNVHVNNNHNNNNHNHNNNVVNNNNHNHNNNNHNNNNNNN1B400A403
+http://localhost/quoridor/#HNHNHNNNHNNHNHVNHNHNNNHNHNNNNVNNNVNHNHNHNNNNNNNNNNNHNNNNNNNNNNNN2C303G500
+http://localhost/quoridor/#HNNNNNNNNHVNVNNNNHNNNNNNHNVHVNNNHNNNNHNHNNNVVNNNNHNHNNNNHNVNNNNN2B400A402

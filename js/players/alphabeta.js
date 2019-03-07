@@ -18,7 +18,6 @@ var AlphaBetaPlayer = (function() { //Poor man's namespace (module pattern)
 		//Reset runtime variables				
 		bestTypeDestAtDepth = bestTypeDestAtDepth.fill(INVALID);		
 		bestScoreAtDepth = bestScoreAtDepth.fill(-INFINITY);
-		BoardLite_clean();
 		totalNodes = 0; //Debug
 		
 		//START SEARCH
@@ -34,9 +33,9 @@ var AlphaBetaPlayer = (function() { //Poor man's namespace (module pattern)
 		
 		//Debugging info
 		if (DEBUG) {
-			if (bestScore >= INFINITY) Stage.sendMessage('AB: Win found');
+			if (bestScore >= INFINITY) Stage.sendMessage('Minotaur: Win found');
 			else if (bestScore <= -INFINITY) {
-				Stage.sendMessage('AB: Inevitable loss'); 
+				Stage.sendMessage('Minotaur: Inevitable loss'); 
 			}			
 			
 			console.log ('AlphaBeta Stats:');
@@ -50,10 +49,12 @@ var AlphaBetaPlayer = (function() { //Poor man's namespace (module pattern)
 		}	
 		
 		
-		if (bestTypeDest == INVALID) { //Probably gonna lose - Get first avail
-			var moves = board.getMoves();
-			if (!moves.length) return onPlayed();	
-			else return onPlayed(moves[0]);
+		if (bestTypeDest == INVALID) { //Probably gonna lose - start walking min path
+			var minPathAndOrigin = BoardLite_Path_Min_getDistAndOrigin(bl, turn);    
+			//var dist = minPathAndOrigin[0];
+			var origin = minPathAndOrigin[1];     
+			var move = BoardLite_toBoardMove(bl, turn, TYPE_MOVE | origin);	
+			return onPlayed(move);
 		}		
 		else { //Use the best move found			
 			var move = BoardLite_toBoardMove(bl, turn, bestTypeDest);	
@@ -61,9 +62,11 @@ var AlphaBetaPlayer = (function() { //Poor man's namespace (module pattern)
 		}
 	}
 	
+	
 	//Recursive Alpha-Beta tree search	
 	function negamax (bl, turn, oppTurn, alpha, beta, depth) { 						
 		
+		if (depth >= MAX_DEPTH) return BoardLite_score2(bl, turn);
 		//EXPANSION	
 		var bestScore = -INFINITY;
 		
@@ -71,15 +74,18 @@ var AlphaBetaPlayer = (function() { //Poor man's namespace (module pattern)
 		var cachePath1 = new Uint16Array(WALL_SPACES+1); //[WallType * 64][Min Dist]
 		var cachePath2 = new Uint16Array(WALL_SPACES+1); //[WallType * 64][Min Dist]	
 		
-		var useMinCache = depth+1 >= MAX_DEPTH? true : false;
-		var gameTheoreticalScore = BoardLite_getPlays(bl, turn, plays, cachePath1, cachePath2, useMinCache); //Pass play by reference
+
+		var useMinCache = true;//depth+1 >= MAX_DEPTH? true : false;
+		var gameTheoreticalScore;
+		if (turn == PLAYER1) gameTheoreticalScore = BoardLite_getPlays(bl, turn, plays, cachePath1, cachePath2, useMinCache); //Pass play by reference
+		else gameTheoreticalScore = BoardLite_getPlays(bl, turn, plays, cachePath2, cachePath1, useMinCache); //Pass play by reference
 		if (gameTheoreticalScore == INFINITY) { //Game theoretical win			
-			bestTypeDestAtDepth[depth] = typeDest;
+			bestTypeDestAtDepth[depth] = plays[0];
 			bestScoreAtDepth[depth] = gameTheoreticalScore;
 			return INFINITY; 
 		}
-		else if (gameTheoreticalScore == -INFINITY) return -INFINITY;
-
+		else if (gameTheoreticalScore == INFINITY) return INFINITY;
+		
 
 		//Loop through child states						
 		totalNodes += plays[MAX_PLAYS];
@@ -88,19 +94,24 @@ var AlphaBetaPlayer = (function() { //Poor man's namespace (module pattern)
 			var dest = typeDest & MASK_DEST;
 			var type = typeDest & MASK_TYPE;
 
-			var childBoard = bl.slice();
-			if (type == TYPE_MOVE) BoardLite_makeMove(childBoard, turn, dest);
-			else BoardLite_makePlace(childBoard, turn, dest, type);						
-				
-			var recursedScore;
-			//Pre-Recursive Anchor
-			if (depth+1 >= MAX_DEPTH) {
-				//Reversed turns, because it would have switched
-				recursedScore = BoardLite_score(childBoard, oppTurn, dest, type, cachePath2, cachePath1); 
-			}
-			else recursedScore = negamax(childBoard, oppTurn, turn, -beta, -Math.max(alpha, bestScore), depth+1); //Swap cur player as we descend
+			var childBoard = bl.slice();			
+			
 
-			var currentScore = -recursedScore; //This is for the 'nega' part of negamax
+			if (type & TYPE_MOVE_JUMP) BoardLite_makeMove(childBoard, turn, dest);					
+			else BoardLite_makePlace(childBoard, turn, dest, type);									
+			
+
+			var currentScore;	
+			var recursedScore;		
+			//Pre-Recursive Anchor
+			// if (depth+1 >= MAX_DEPTH) {
+			// 	//Reversed turns, because it would have switched
+			// 	//if (MAX_DEPTH%2 == 0) recursedScore = BoardLite_score(childBoard, oppTurn, dest, type, cachePath2, cachePath1);
+			// 	//else recursedScore = -BoardLite_score(childBoard, turn, dest, type, cachePath1, cachePath2); 	
+			// }
+			// else 
+			recursedScore = negamax(childBoard, oppTurn, turn, -beta, -Math.max(alpha, bestScore), depth+1); //Swap cur player as we descend
+			var currentScore = -recursedScore;
 			
 			if (currentScore > bestScore) { 
 				bestScore = currentScore;								

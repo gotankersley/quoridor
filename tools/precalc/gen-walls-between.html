@@ -7,6 +7,7 @@
 <title>Quoridor - Generate Walls Between</title>
 <link rel="shortcut icon" href="../../img/favicon.ico" />	
 
+<script src="../../js/core/board-lite/board-data.js"></script>
 <script src="../../js/core/board.js"></script>
 <body>
 <script>
@@ -49,10 +50,10 @@ for (var p = 0; p < FLOOR_SPACES; p++) {
 	if (canMove(r, c, r, c+1)) {				
 		
 		if (r-1 >= 0) moves.push(((r-1)*WALL_SIZE)+c);   //wall pos 1
-		else moves.push((r*WALL_SIZE)+(c+1));   		
+		else moves.push((r*WALL_SIZE)+c);   		
 		
 		if (r < WALL_SIZE) moves.push((r*WALL_SIZE)+c);  //wall pos 2
-		else moves.push(((r-1)*WALL_SIZE)+(c+1));   		
+		else moves.push(((r-1)*WALL_SIZE)+c);   		
 	}
 	else {  moves.push(-1); moves.push(-1);}
 

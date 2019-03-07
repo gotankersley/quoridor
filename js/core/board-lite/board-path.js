@@ -1,6 +1,5 @@
 //Ill-advised globals
 var g_breadcrumbs = new Uint32Array(FLOOR_SPACES);
-var g_maxBreadcrumbs = 0;
 
 var g_stack = new Uint16Array(FLOOR_SPACES); //[pos]
 var g_cachePrev = new Uint16Array(FLOOR_SPACES); //[prevIndex] - Used when populating g_cachePaths(s) to store chain of previous positions back to pawn
@@ -9,9 +8,8 @@ var g_cachePrev = new Uint16Array(FLOOR_SPACES); //[prevIndex] - Used when popul
 function BoardLite_Path_DFS_has(b, turn) { //Depth First Search - DFS
     
     var pawn = b[turn];    
-
-    g_maxBreadcrumbs++;
-    g_breadcrumbs[pawn] = g_maxBreadcrumbs;
+    g_breadcrumbs = g_breadcrumbs.fill(0);    
+    g_breadcrumbs[pawn] = 1;
     g_stack[0] = pawn;
     var stackTop = 1;
     
@@ -25,12 +23,12 @@ function BoardLite_Path_DFS_has(b, turn) { //Depth First Search - DFS
             var destR = searchDests[d+1]; //DestR
             var dest = searchDests[d+2]; //Dest pos
             
-            if (g_breadcrumbs[dest] == g_maxBreadcrumbs) continue; //Already checked                        
+            if (g_breadcrumbs[dest]) continue; //Already checked                        
             else if (BoardLite_isWallBetween(b, topPos, dir)) continue; //Wall between
             else if (destR == WIN_ROWS[turn]) return true; //End reached
                 
             g_stack[stackTop++] = dest; //Push on to stack
-            g_breadcrumbs[dest] = g_maxBreadcrumbs;
+            g_breadcrumbs[dest] = 1; //Visited
         }
 
     }
@@ -41,9 +39,9 @@ function BoardLite_Path_DFS_has(b, turn) { //Depth First Search - DFS
 function BoardLite_Path_DFS_populateCache(b, turn, cacheRef) { //Depth First Search - DFS    
     
     var pawn = b[turn];    
-
-    g_maxBreadcrumbs++;
-    g_breadcrumbs[pawn] = g_maxBreadcrumbs;
+    
+    g_breadcrumbs = g_breadcrumbs.fill(0);   
+    g_breadcrumbs[pawn] = 1;
     g_stack[0] = pawn;
     var stackTop = 1;
     g_cachePrev[pawn] = FLOOR_SPACES; //End of the line    
@@ -59,7 +57,7 @@ function BoardLite_Path_DFS_populateCache(b, turn, cacheRef) { //Depth First Sea
             var dest = searchDests[d+2]; //Dest pos
             
             
-            if (g_breadcrumbs[dest] == g_maxBreadcrumbs) continue; //Already checked                        
+            if (g_breadcrumbs[dest]) continue; //Already checked                        
             else if (BoardLite_isWallBetween(b, topPos, dir)) continue; //Wall between
             else if (destR == WIN_ROWS[turn]) { //End reached                                                
                 BoardLite_addWallsToCachePath(topPos, dest, cacheRef); 
@@ -67,7 +65,7 @@ function BoardLite_Path_DFS_populateCache(b, turn, cacheRef) { //Depth First Sea
             }
                 
             g_stack[stackTop++] = dest; //Push on to stack
-            g_breadcrumbs[dest] = g_maxBreadcrumbs;
+            g_breadcrumbs[dest] = 1;
             g_cachePrev[dest] = topPos; //Store chain back to pawn            
         }
 
@@ -148,6 +146,7 @@ function BoardLite_Path_Min_getDist(b, turn) { //G*  - Distance only
 
     }
     
+    if (minPathLength == FLOOR_SPACES) throw new Error('BoardLite_Path_Min_getDist: no path available- ' + BoardLite_toString(b, turn)); 
     return minPathLength;    
 }
 
@@ -203,7 +202,7 @@ function BoardLite_Path_Min_getDistAndOrigin(b, turn) { //G*  - [Distance, origi
                     while (stackTop > 0);
                     
                     //Nothing better found, so this must be the min
-                    return minPathLength;    
+                    return [minPathLength, minOrigin];    
                 }                
             }
                 
@@ -215,6 +214,7 @@ function BoardLite_Path_Min_getDistAndOrigin(b, turn) { //G*  - [Distance, origi
 
     }
     
+    if (minPathLength == FLOOR_SPACES) throw new Error('BoardLite_Path_Min_getDistAndOrigin: no path available- ' + BoardLite_toString(b, turn)); 
     return [minPathLength, minOrigin];
 }
 
@@ -289,7 +289,8 @@ function BoardLite_Path_Min_populateCache(b, turn, cacheRef) { // Populate walls
 
     }
     
-    if (minTop == INVALID || minDest == INVALID) throw new Error('BoardLite_Path_Min_populateCache: invalid min top/dest')
+    if (minTop == INVALID || minDest == INVALID) throw new Error('BoardLite_Path_Min_populateCache: no path available- ' + BoardLite_toString(b, turn));
+        
     BoardLite_addWallsToCachePath(minTop, minDest, cacheRef); 
     cacheRef[WALL_SPACES] = minPathLength;    
     return;
@@ -305,8 +306,8 @@ function BoardLite_addWallsToCachePath(prev, cur, cacheRef) {
         var wallType = WALLTYPE_BY_DIR[prevDir];
         var wallPos1 = WALLS_BETWEEN[betweenIndex];
         var wallPos2 = WALLS_BETWEEN[betweenIndex+1];
-        cacheRef[wallPos1] = wallType;
-        cacheRef[wallPos2] = wallType;                    
+        cacheRef[wallPos1] |= wallType; //Allow for potential multiple walls at single center - otherwise it will overwrite when turning corners
+        cacheRef[wallPos2] |= wallType;                    
                              
         cur = prev;
         prev = g_cachePrev[prev];

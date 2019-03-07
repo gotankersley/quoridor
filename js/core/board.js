@@ -357,7 +357,7 @@ Board.prototype.getMoves = function(moveType) {
 	if (this.wallCounts[turn] <= 0) return moves; //No places available
 	else if (moveType == FLOOR) return moves;
 	
-	for (var r = 0; r < WALL_SIZE; r++) {
+	for (var r = 0; r < WALL_SIZE; r++) {		
 		for (var c = 0; c < WALL_SIZE; c++) {
 			//Horizontal walls
 			if (!this.intersectsWall(r, c, H_WALL)) {

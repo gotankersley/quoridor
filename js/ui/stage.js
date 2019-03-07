@@ -76,7 +76,7 @@ var Stage = (function() { //Stage namespace (module pattern)
 	function getInvalidMessage(invalidCode) {
 		switch(invalidCode) {
 			case VALID: return 'Valid';
-			case INVALID_MOVE: return 'Nope: can only move one square...'; 
+			case INVALID_MOVE: throw new Error('Invalid: can only move 1'); //return 'Nope: can only move one square...'; 
 			case INVALID_MOVE_WALL: return 'Nope: unable to move through wall...'; 			
 			case INVALID_JUMP: return 'Nope: jumps must be over a pawn or diagonal with a wall behind...'; 
 			case INVALID_SOURCE: return 'Nope: not your pawn...'; 
@@ -133,10 +133,9 @@ var Stage = (function() { //Stage namespace (module pattern)
 			mode = MODE_PLAY;
 			return;
 		}			
-				
+		else if (game.players[board.turn] != PLAYER_HUMAN) return; //AI's turn
 		
-		var move = INVALID;
-		var updateBoard = false;
+		var move = INVALID;		
 
 		if (e.ctrlKey ) {
 			
@@ -211,6 +210,7 @@ var Stage = (function() { //Stage namespace (module pattern)
 			mode = MODE_PLAY;
 			return;
 		}
+		
 		var x = e.clientX - canvasBounds.left; 
 		var y = e.clientY - canvasBounds.top;  
 

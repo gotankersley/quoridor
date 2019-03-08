@@ -97,7 +97,10 @@ function BoardLite_getPlays(b, turn, playsRef, cacheRef1, cacheRef2, getMinCache
         var origin1 = minPathAndOrigin1[1];        
         if (b[oppTurn] == origin1) { //Jump
             for (var p = 0; p < playsRef[MAX_PLAYS]; p++) {
-                if (playsRef[p] & TYPE_JUMP) playsRef[0] = TYPE_MOVE | (playsRef[p] & MASK_DEST);
+                if (playsRef[p] & TYPE_JUMP) {
+                    playsRef[0] = TYPE_MOVE | (playsRef[p] & MASK_DEST);
+                    break;
+                }
             }
             minDist1--; 
         }

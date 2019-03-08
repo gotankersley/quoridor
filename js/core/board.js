@@ -79,17 +79,24 @@ function Board(boardStr, findPath) {
 	this.pawns = [{r:WALL_SIZE, c:CENTER_SPACE},{r:0, c:CENTER_SPACE}];
 	
 	this.wallCounts = [STARTING_WALLS, STARTING_WALLS];
+
 	this.walls = new Array(WALL_SIZE);	//Wall Centers		
+	this.wallPlacers = new Array(WALL_SIZE);
 	for (var r = 0; r < WALL_SIZE; r++) {
 		this.walls[r] = new Array(WALL_SIZE);
+		this.wallPlacers[r] = new Array(WALL_SIZE);
+
 		for (var c = 0; c < WALL_SIZE; c++) {
 			this.walls[r][c] = NO_WALL;
+			this.wallPlacers[r][c] = INVALID;
 		}
 	}
 
+	
 	this.breadcrumbs = new Array(FLOOR_SIZE);	//Temp breadcrumbs for path finding
 	for (var r = 0; r < FLOOR_SIZE; r++) {
 		this.breadcrumbs[r] = new Array(FLOOR_SIZE);
+		
 		for (var c = 0; c < FLOOR_SIZE; c++) {
 			this.breadcrumbs[r][c] = false;
 		}
@@ -102,6 +109,7 @@ function Board(boardStr, findPath) {
 		this.getPath(PLAYER1);
 		this.getPath(PLAYER2);
 	}
+	
 
 }
 
@@ -111,6 +119,7 @@ Board.prototype.copy = function() {
 	for (var r = 0; r < WALL_SIZE; r++) {
 		for (var c = 0; c < WALL_SIZE; c++) {
 			newBoard.walls[r][c] = this.walls[r][c];
+			newBoard.wallPlacers[r][c] = this.wallPlacers[r][c];
 		}
 	}
 
@@ -433,6 +442,7 @@ Board.prototype.placeWall = function(r, c, wallType) {
 	//Assume that it has already been validated	
 	this.wallCounts[this.turn]--;	
 	this.walls[r][c] = wallType;
+	this.wallPlacers[r][c] = this.turn; //Store Placer for optional display
 }
 
 Board.prototype.getPath = function(turn) {
@@ -665,6 +675,7 @@ Board.prototype.fromString = function(boardStr) {
 		if (wallChar == CHAR_H_WALL) this.walls[r][c] = H_WALL;
 		else if (wallChar == CHAR_V_WALL) this.walls[r][c] = V_WALL;
 		else if (wallChar != CHAR_NO_WALL) throw new Error('Invalid walltype: ' + wallChar);
+		//Don't set wallPlacer, because we don't know
 	}
 
 	this.turn = Number.parseInt(boardStr[WALL_SPACES])-1;

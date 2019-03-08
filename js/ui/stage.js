@@ -38,25 +38,27 @@ var Stage = (function() { //Stage namespace (module pattern)
 	var WIDTH_WALL_SHORT = 20;
 		
 					
-	var KEY_Z = 90;
-	var KEY_Y = 89;
-	var KEY_LEFT = 37;
-	var KEY_RIGHT = 39;
-	var KEY_UP = 38;
-	var KEY_DOWN = 40;
+	const KEY_Z = 90;
+	const KEY_Y = 89;
+	const KEY_LEFT = 37;
+	const KEY_RIGHT = 39;
+	const KEY_UP = 38;
+	const KEY_DOWN = 40;
 
-	var KEY_W = 87;
-	var KEY_A = 65;
-	var KEY_S = 83;
-	var KEY_D = 68;
+	const KEY_W = 87;
+	const KEY_A = 65;
+	const KEY_S = 83;
+	const KEY_D = 68;
 
-	var KEY_1 = 49;
-	var KEY_2 = 50;
+	const KEY_1 = 49;
+	const KEY_2 = 50;
+
+	const KEY_SPACE = 32;
 	
 	var DELAY_MOVE = 500;
 	var DELAY_WIN_MESSAGE = 100;
 		
-	var MODE_PLAY = 0;
+	//var MODE_PLAY = 0;
 	var MODE_ANIM = 1;
 	var MODE_EDIT = 2;
 		
@@ -69,6 +71,7 @@ var Stage = (function() { //Stage namespace (module pattern)
 	var board;
 	var cursor = new Cursor();	
 	
+	var tween;
 	var animInfo = {};	
 	var mode = MODE_PLAY;
 		
@@ -113,9 +116,10 @@ var Stage = (function() { //Stage namespace (module pattern)
 		
 		//Event callbacks
 		canvas.addEventListener('click', onMouseClick.bind(this), false);
+		canvas.addEventListener('mousemove', onMouseMove.bind(this), false);		
 		window.addEventListener('keydown', onKeyDown.bind(this), false);				
 		window.addEventListener('keyup', onKeyUp.bind(this), false);		
-		canvas.addEventListener('mousemove', onMouseMove.bind(this), false);		
+		window.addEventListener('scroll', onWindowScroll.bind(this), false);		
 		
 		//Game event callbacks
 		game.addEventListener(EVENT_INVALID, onGameInvalid.bind(this));
@@ -130,13 +134,13 @@ var Stage = (function() { //Stage namespace (module pattern)
 	//Mouse and Keyboard Events	
 	function onKeyDown(e) {	
 		if (mode == MODE_ANIM) { //Snap to position
-			mode = MODE_PLAY;
+			mode = MODE_PLAY;			
 			return;
 		}			
-		else if (game.players[board.turn] != PLAYER_HUMAN) return; //AI's turn
+		else if (!game.canHumanPlay()) return; //AI's turn
 		
 		var move = INVALID;		
-
+		
 		if (e.ctrlKey ) {
 			
 			//Undo move with Ctrl + Z
@@ -183,6 +187,10 @@ var Stage = (function() { //Stage namespace (module pattern)
 		else if (e.keyCode == KEY_A || e.keyCode == KEY_LEFT) move = board.getMoveFromDir(LEFT);
 		else if (e.keyCode == KEY_S || e.keyCode == KEY_DOWN) move = board.getMoveFromDir(BACKWARD);
 		else if (e.keyCode == KEY_D || e.keyCode == KEY_RIGHT) move = board.getMoveFromDir(RIGHT);
+		else if (e.keyCode == KEY_SPACE) {			
+			console.log('here');
+			if (game.players[board.turn] != PLAYER_HUMAN) game.play();
+		}
 
 		if (move != INVALID) {
 			if (board.onBoard(move.sr, move.sc) && board.onBoard(move.dr, move.dc)) {			
@@ -206,10 +214,12 @@ var Stage = (function() { //Stage namespace (module pattern)
 	}
 
 	function onMouseClick(e) {
-		if (mode == MODE_ANIM) { //Snap to position
+		if (mode == MODE_ANIM) { //Snap to position			
 			mode = MODE_PLAY;
 			return;
 		}
+		var turn = board.turn;
+		if (!game.canHumanPlay()) return; //AI's turn
 		
 		var x = e.clientX - canvasBounds.left; 
 		var y = e.clientY - canvasBounds.top;  
@@ -220,8 +230,6 @@ var Stage = (function() { //Stage namespace (module pattern)
 		//Check bounds
 		if (!board.onBoard(cursor.floor.r, cursor.floor.c)) return;
 		
-		var turn = board.turn;
-		if (game.players[turn] != PLAYER_HUMAN) return; //AI's turn
 						
 		//Pawn moving on floor		
 		var wallType = cursor.type;
@@ -243,6 +251,10 @@ var Stage = (function() { //Stage namespace (module pattern)
 		}
 	}			
 	
+	function onWindowScroll(e) {
+		canvasBounds = canvas.getBoundingClientRect(); 
+	}
+
 	function sendMessage(text) {	
 		var msg = document.getElementById('message');
 		msg.innerText = text;
@@ -269,10 +281,9 @@ var Stage = (function() { //Stage namespace (module pattern)
 		}, DELAY_WIN_MESSAGE);
 	}
 	
-	function onGamePlayed(playerType, move) {
-		
+	function onGamePlayed(playerType, move, oldTurn) {		
 		cursor.selectOn = false;
-		animMove(move, playerType, function() {			
+		animMove(move, playerType, oldTurn, function() {			
 			board = game.board.copy();
 			var boardStr = board.toString();
 			Url.setHash(boardStr);
@@ -290,7 +301,7 @@ var Stage = (function() { //Stage namespace (module pattern)
 	}
 		
 	
-	function animMove(move, initiatingPlayer, callback) {	
+	function animMove(move, initiatingPlayer, oldTurn, callback) {	
 		if (initiatingPlayer == PLAYER_HUMAN || move.type != FLOOR) {		
 			return callback();//Skip animation for human
 		}
@@ -299,10 +310,11 @@ var Stage = (function() { //Stage namespace (module pattern)
 			r:move.sr,
 			c:move.sc,
 			x:(move.sc * GRID_SIZE), 
-			y:(move.sr * GRID_SIZE)
+			y:(move.sr * GRID_SIZE),
+			oldTurn:oldTurn
 		};	
 		
-		var tween = new TWEEN.Tween(animInfo)
+		tween = new TWEEN.Tween(animInfo)
 			.to({x:(move.dc * GRID_SIZE), y:(move.dr * GRID_SIZE)}, menu.animSpeed)	
 			.easing(TWEEN.Easing.Quadratic.In)		
 			.onUpdate(function() {				
@@ -377,11 +389,13 @@ var Stage = (function() { //Stage namespace (module pattern)
 	
 				//Walls
 				if (wall == H_WALL){ //Horizontal
-					ctx.fillStyle = COLOR_WALL;
+					if (menu.showWallPlacer && board.wallPlacers[r][c] != INVALID) ctx.fillStyle = COLOR_PLAYERS[board.wallPlacers[r][c]];
+					else ctx.fillStyle = COLOR_WALL;
 					ctx.fillRect(x - WIDTH_FLOOR-WIDTH_FLOOR_OFFSET, y-WIDTH_FLOOR_OFFSET, WIDTH_WALL_LONG-WIDTH_FLOOR_OFFSET, WIDTH_WALL_SHORT);
 				}
 				else if (wall == V_WALL) { //Vertical
-					ctx.fillStyle = COLOR_WALL;
+					if (menu.showWallPlacer && board.wallPlacers[r][c] != INVALID) ctx.fillStyle = COLOR_PLAYERS[board.wallPlacers[r][c]];
+					else ctx.fillStyle = COLOR_WALL;
 					ctx.fillRect(x-WIDTH_FLOOR_OFFSET, y - WIDTH_FLOOR-WIDTH_FLOOR_OFFSET, WIDTH_WALL_SHORT, WIDTH_WALL_LONG-WIDTH_FLOOR_OFFSET);
 				}
 				
@@ -411,12 +425,12 @@ var Stage = (function() { //Stage namespace (module pattern)
 		//Pawns
 		for (var p = 0; p < PLAYERS; p++) {			
 			var pawn = board.pawns[p];			
-			//Active pawn outline		
-			if (p == board.turn) {
-				if (mode == MODE_ANIM) continue;
-				drawPawn(pawn.c * GRID_SIZE, pawn.r * GRID_SIZE, COLOR_PAWN_OUTLINES[board.turn], WIDTH_PAWN+WIDTH_SELECTED, p, false);
-			}
+			//Active pawn outline	
+			if (mode == MODE_ANIM && animInfo.oldTurn == p) continue;	
+			else if (p == board.turn) drawPawn(pawn.c * GRID_SIZE, pawn.r * GRID_SIZE, COLOR_PAWN_OUTLINES[board.turn], WIDTH_PAWN+WIDTH_SELECTED, p, false);	
+						
 			drawPawn(pawn.c * GRID_SIZE, pawn.r * GRID_SIZE, COLOR_PLAYERS[p], WIDTH_PAWN, p, true);
+			
 		}
 						
 		drawWallCount((CANVAS_SIZE/2), CANVAS_SIZE+INFO_OFFSET+15, PLAYER1);
@@ -433,7 +447,7 @@ var Stage = (function() { //Stage namespace (module pattern)
 		if (mode == MODE_ANIM) {
 			var x = animInfo.x;
 			var y = animInfo.y;			
-			drawPawn(x, y, COLOR_PLAYERS[board.turn], WIDTH_PAWN, board.turn, true);			
+			drawPawn(x, y, COLOR_PLAYERS[animInfo.oldTurn], WIDTH_PAWN, animInfo.oldTurn, true);			
 		}
 		
 

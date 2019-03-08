@@ -33,7 +33,7 @@ var AlphaBetaPlayer = (function() { //Poor man's namespace (module pattern)
 		
 		//Debugging info
 		if (DEBUG) {
-			if (bestScore >= INFINITY) Stage.sendMessage('Minotaur: Win found');
+			if (bestScore >= INFINITY) Stage.sendMessage('Minotaur: MOoo! (Win found)');
 			else if (bestScore <= -INFINITY) {
 				Stage.sendMessage('Minotaur: Inevitable loss'); 
 			}			

@@ -3,20 +3,22 @@
 #About: Class to manage players and events
 */
 //Constants
-var PLAYER_HUMAN = 0;
-var PLAYER_RANDOM = 1;
-var PLAYER_HEURISTIC = 2;
-var PLAYER_THESEUS = 3;
-var PLAYER_NETWORK = 4;
-var PLAYER_ALPHABETA = 4;
+const PLAYER_HUMAN = 0;
+const PLAYER_RANDOM = 1;
+const PLAYER_HEURISTIC = 2;
+const PLAYER_THESEUS = 3;
+const PLAYER_NETWORK = 4;
+const PLAYER_ALPHABETA = 4;
 
 
-var EVENT_INVALID = 0;
-var EVENT_PLAYED = 1;
-var EVENT_GAME_OVER = 2;
-var EVENT_BOARD_UPDATE = 3;
-var EVENT_SUGGEST = 4;
+const EVENT_INVALID = 0;
+const EVENT_PLAYED = 1;
+const EVENT_GAME_OVER = 2;
+const EVENT_BOARD_UPDATE = 3;
+const EVENT_SUGGEST = 4;
 
+const MODE_PLAY = 0;
+const MODE_UNDO = 1;
 
 //Class Game
 function Game(boardStr) {
@@ -33,6 +35,7 @@ function Game(boardStr) {
 	
 	this.gameEvents = {}; //Callbacks to update UI		
 	this.suggesting = false;
+	this.mode = MODE_PLAY;
 }
 
 
@@ -68,10 +71,17 @@ Game.prototype.undoMove = function() {
 		this.board = new Board(boardStr);		
 		this.board.turn = +(!oldTurn);		
 		Url.setHash(boardStr);
+		this.mode = MODE_UNDO;
 		this.gameEvents[EVENT_BOARD_UPDATE](this.board);
 		return true;		
 	}
 	return false;
+}
+
+Game.prototype.canHumanPlay = function() {
+	if (this.players[this.board.turn] == PLAYER_HUMAN || this.mode == MODE_UNDO) return true;
+	else return false;
+
 }
 
 Game.prototype.redoMove = function() {	
@@ -86,7 +96,7 @@ Game.prototype.redoMove = function() {
 		
 		//Check for Game over		
 		if (this.board.isGameOver()) this.onGameOver(this.board.turn);	
-		
+		this.mode = MODE_UNDO;
 		this.gameEvents[EVENT_BOARD_UPDATE](this.board);
 		return true;
 	}
@@ -132,7 +142,7 @@ Game.prototype.play = function() {
 
 Game.prototype.onPlayed = function(move) {
 	var self = game;	
-			
+	self.mode = MODE_PLAY;			
 	var board = self.board;	
 	var turn = board.getTurn();
 	var player = self.players[turn];
@@ -148,7 +158,7 @@ Game.prototype.onPlayed = function(move) {
 	if (board.isGameOver()) self.onGameOver(board.turn);
 	else {
 		board.changeTurn();		
-		self.gameEvents[EVENT_PLAYED](player, move);
+		self.gameEvents[EVENT_PLAYED](player, move, +(!board.turn));
 	}
 }
 

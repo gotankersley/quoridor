@@ -1,26 +1,31 @@
-Todo:
-- 3D views
-- Arena / node.js GA
+ISWBNI:
+- 3D view (other topology?)
 - 4 players
-- account for jumps in Min path
-- show who played what wall
+- Arena / node.js GA
+- animate wall place
+- WASM - (via rust?)
+- MonteCarlo AI
+
+Todo:
+- 0:n walls GMO optimization
+- Random options
+- Theseus options
+- Minotaur options
 
 Questions:
 - Does only placing walls adjacent limit strength?
 - Is there a good random weight for % moves / % places?
 - Can A/B depth use fractional 0.1, or 0.5 for moving?
 - Learning states?
-- 
+- Account for jumps in Min path 
 
 
-deriveMove
-getMoves
 getSmartRandom
 
 
 Names:
 - Status Quo
-- Minotaur
+x Minotaur
 - Labyrinth
 - yarn
 - Troll / TrollKing
@@ -29,9 +34,10 @@ Names:
 - Orcrist / Glamdring
 - Daedalus 
 - Shinglepox
+- EvilKingMinos
+
 
 Heuristic:
-
 walls behind / in front
 naive dist
 
@@ -58,7 +64,6 @@ probably not:
 - gap(s)
 - position weight
 - multiple paths avail/single path (useful if can define)
-
 
 
 metadata:

@@ -12,10 +12,11 @@ function MenuProperties() {
 	//Debug
 	this.showGrid = false;
 	this.showCenters = false;
-	this.showPositions = this.getDefault('showPositions', true);
+	this.showPositions = this.getDefault('showPositions', false);
 	this.showCoordinates = true;//this.getDefault('showCoordinates', true);
 	this.pathFindingBFS = true;
 	this.animSpeed = 500;	
+	this.showWallPlacer = this.getDefault('showWallPlacer', false);
 }
 
 MenuProperties.prototype.getDefault = function(propertyName, defaultValue) {
@@ -60,6 +61,7 @@ function MenuManager() {
 	debugMenu.add(this.properties, 'showCenters');	
 	debugMenu.add(this.properties, 'showPositions').onChange(this.persistChange);
 	debugMenu.add(this.properties, 'showCoordinates');
+	debugMenu.add(this.properties, 'showWallPlacer').onChange(this.persistChange);
 	debugMenu.add(this.properties, 'animSpeed', 0, 5000);	
 
 	//Links menu

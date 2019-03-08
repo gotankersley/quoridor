@@ -84,7 +84,8 @@ var HeuristicPlayer = (function() { //Poor man's namespace (module pattern)
 			else BoardLite_makePlace(childBoard, turn, dest, type);
 
 
-			var score = BoardLite_score(childBoard, turn, dest, type, cachePath1, cachePath2); 
+			//var score = BoardLite_score(childBoard, turn, dest, type, cachePath1, cachePath2); 
+			var score = BoardLite_score2(childBoard, turn);
 			//console.log(p + '-', score)	
 			
 			if (score > bestScore){ 

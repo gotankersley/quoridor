@@ -89,13 +89,16 @@ function BoardLite_getPlays(b, turn, playsRef, cacheRef1, cacheRef2, getMinCache
         }
     }   
    
-    //Wallcounts are both zero - shortest path wins
-    if (b[WALL_COUNT1] + b[WALL_COUNT2]  == 0) {
+    //Check for one or more players with no walls
+    if (b[WALL_COUNT1] == 0 || b[WALL_COUNT2] == 0) {
+        var wallCount1 = b[WALL_COUNT+turn];
+        var wallCount2 = b[WALL_COUNT+oppTurn];
         
-        var minPathAndOrigin1 = BoardLite_Path_Min_getDistAndOrigin(b, turn);         
+        var minDist2 = BoardLite_Path_Min_getDist(b, oppTurn); 
+        var minPathAndOrigin1 = BoardLite_Path_Min_getDistAndOrigin(b, turn);                 
         var minDist1 = minPathAndOrigin1[0];       
-        var origin1 = minPathAndOrigin1[1];        
-        if (b[oppTurn] == origin1) { //Jump
+        var origin1 = minPathAndOrigin1[1]; 
+        if (oppPawn == origin1) { //Jump
             for (var p = 0; p < playsRef[MAX_PLAYS]; p++) {
                 if (playsRef[p] & TYPE_JUMP) {
                     playsRef[0] = TYPE_MOVE | (playsRef[p] & MASK_DEST);
@@ -106,16 +109,21 @@ function BoardLite_getPlays(b, turn, playsRef, cacheRef1, cacheRef2, getMinCache
         }
         else playsRef[0] = TYPE_MOVE | origin1;          
         playsRef[MAX_PLAYS] = 1; //Only 1 option available
-        
-        var minDist2 = BoardLite_Path_Min_getDist(b, oppTurn); //Todo, potential for jump as well
-        if (minDist1 <= minDist2) return INFINITY;   //Tie goes to player
-        else return -INFINITY; //Loss 
-    
-    }   
-    
+
+        if (wallCount1 + wallCount2 == 0) { //Both zero
+            if (minDist1 <= minDist2) return INFINITY;   //Tie goes to player
+            else return -INFINITY; //Loss 
+        }
+        else if (wallCount1 == 0) { //Current Player has no walls
+            if (minDist2 < minDist2) return -INFINITY;            
+        }
+        else { //Opp Player has no walls
+            if (minDist1 <= minDist2) return INFINITY;            
+        }
+    }    
    
     //Add Places
-    else if (b[WALL_COUNT+turn] > 0) { 
+    else {
         //Populate cachePath - assume this will succeed, or we have bigger problems...
         if (getMinCache) {            
             BoardLite_Path_Min_populateCache(b, PLAYER1, cacheRef1); 

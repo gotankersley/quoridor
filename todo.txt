@@ -55,6 +55,7 @@ negative distance on path
 which pawn further down the board
 wall count ratio between players
 does blocking length own path?
+on critical path bonus
 
 probably not:
 - area can move

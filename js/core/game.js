@@ -8,7 +8,7 @@ const PLAYER_RANDOM = 1;
 const PLAYER_HEURISTIC = 2;
 const PLAYER_THESEUS = 3;
 const PLAYER_NETWORK = 4;
-const PLAYER_ALPHABETA = 4;
+const PLAYER_ALPHABETA = 5;
 
 
 const EVENT_INVALID = 0;

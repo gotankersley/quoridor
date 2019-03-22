@@ -34,7 +34,7 @@ x Minotaur
 - Orcrist / Glamdring
 - Daedalus 
 - Shinglepox
-- EvilKingMinos
+* EvilKingMinos
 
 
 Heuristic:
@@ -56,6 +56,7 @@ which pawn further down the board
 wall count ratio between players
 does blocking length own path?
 on critical path bonus
+delta between wall count prev, and place (if it goes up alot, then it's significant)
 
 probably not:
 - area can move
@@ -87,3 +88,5 @@ NNNNNNNNNNNNNNNNNNNNNNNNNNVHNNNNNNNNNNNNNNVNVNNNNNNHNVNNNNNNNNNN1E406D608
 http://localhost/quoridor/#HNNNNNNNNHVNVNNNNHNNNNNNHNVHVNNNHNNNNHNHNNNVVNNNNHNHNNNNHNNNNNNN1B400A403
 http://localhost/quoridor/#HNHNHNNNHNNHNHVNHNHNNNHNHNNNNVNNNVNHNHNHNNNNNNNNNNNHNNNNNNNNNNNN2C303G500
 http://localhost/quoridor/#HNNNNNNNNHVNVNNNNHNNNNNNHNVHVNNNHNNNNHNHNNNVVNNNNHNHNNNNHNVNNNNN2B400A402
+
+https://upcommons.upc.edu/bitstream/handle/2117/127676/131875.pdf?sequence=1&isAllowed=y

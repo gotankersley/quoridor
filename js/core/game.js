@@ -9,6 +9,8 @@ const PLAYER_HEURISTIC = 2;
 const PLAYER_THESEUS = 3;
 const PLAYER_NETWORK = 4;
 const PLAYER_ALPHABETA = 5;
+const PLAYER_WASM = 6;
+const PLAYER_MONTECARLO = 7;
 
 
 const EVENT_INVALID = 0;
@@ -133,9 +135,11 @@ Game.prototype.play = function() {
 	switch (player) {		
 		case PLAYER_RANDOM: RandomPlayer.getPlay(board, this.onPlayed); break;	//Random		
 		case PLAYER_HEURISTIC: HeuristicPlayer.getPlay(board, this.onPlayed); break; //Heuristic		
-		case PLAYER_ALPHABETA: AlphaBetaPlayer.getPlay(board, this.onPlayed); break; //Heuristic
+		case PLAYER_ALPHABETA: AlphaBetaPlayer.getPlay(board, this.onPlayed); break; //Minotaur
 		case PLAYER_NETWORK: NetworkPlayer.getPlay(board, this.onPlayed); break; //Network		
 		case PLAYER_THESEUS: TheseusPlayer.getPlay(board, this.onPlayed); break; //Theseus		
+		case PLAYER_WASM: WasmPlayer.getPlay(board, this.onPlayed); break; //Wasm	
+		case PLAYER_MONTECARLO: MonteCarloPlayer.getPlay(board, this.onPlayed); break; //MonteCarlo	
 		default: alert('Invalid player');
 	}		
 }

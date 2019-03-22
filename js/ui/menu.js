@@ -40,6 +40,8 @@ function MenuManager() {
 		Theseus:PLAYER_THESEUS,	
 		Minotaur:PLAYER_ALPHABETA,	
 		Network:PLAYER_NETWORK,				
+		//wasm:PLAYER_WASM,	
+		//MonteCarlo:PLAYER_MONTECARLO,
 	};	
 		
 	this.properties = new MenuProperties();

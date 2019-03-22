@@ -644,11 +644,16 @@ Board.prototype.toString = function() {
 	var boardStr = '';
 	for (var r = 0; r < WALL_SIZE; r++) {
 		for (var c = 0; c < WALL_SIZE; c++) {
-			var wallType = this.walls[r][c];			
-			if (wallType == NO_WALL) boardStr += CHAR_NO_WALL;
-			else if (wallType == H_WALL) boardStr += CHAR_H_WALL;
-			else if (wallType == V_WALL) boardStr += CHAR_V_WALL;
+			var wallType = this.walls[r][c];	
+			var wallChar;		
+			if (wallType == NO_WALL) wallChar = CHAR_NO_WALL;
+			else if (wallType == H_WALL) wallChar = CHAR_H_WALL;
+			else if (wallType == V_WALL) wallChar = CHAR_V_WALL;
 			else throw new Error('Invalid wall type at ' + r + ',' + c + ':' + wallType);
+			
+			if (this.wallPlacers[r][c] == PLAYER2) boardStr += wallChar.toLowerCase();
+			else boardStr += wallChar;
+			
 		}
 	}
 	boardStr += (this.turn+1);
@@ -669,13 +674,16 @@ Board.prototype.toString = function() {
 Board.prototype.fromString = function(boardStr) {
 	for (var w = 0; w < WALL_SPACES; w++) {
 		var wallChar = boardStr[w];
+		var wallCharUpper = wallChar.toUpperCase();
 		var r = Math.floor(w / WALL_SIZE);
 		var c = w % WALL_SIZE;
 
-		if (wallChar == CHAR_H_WALL) this.walls[r][c] = H_WALL;
-		else if (wallChar == CHAR_V_WALL) this.walls[r][c] = V_WALL;
-		else if (wallChar != CHAR_NO_WALL) throw new Error('Invalid walltype: ' + wallChar);
-		//Don't set wallPlacer, because we don't know
+		if (wallCharUpper == CHAR_H_WALL) this.walls[r][c] = H_WALL;
+		else if (wallCharUpper == CHAR_V_WALL) this.walls[r][c] = V_WALL;
+		else if (wallCharUpper != CHAR_NO_WALL) throw new Error('Invalid walltype: ' + wallChar);
+				
+		if (wallChar < 'Z') this.wallPlacers[r][c] = PLAYER1;
+		else this.wallPlacers[r][c] = PLAYER2;
 	}
 
 	this.turn = Number.parseInt(boardStr[WALL_SPACES])-1;

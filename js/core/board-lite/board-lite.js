@@ -21,6 +21,8 @@ const BL_STRUCT_SIZE =
 
 const MAX_PLAYS = (WALL_SPACES*2)+5; //Max branching factor, 64x2 walls, 5 pawn moves
 const INFINITY = 1000000;
+const IN_PLAY = 0;
+const MUST_PLAY = 10;
 const INVALID = -1;
 
 //Now with 75% less (syntactic) sugar...
@@ -43,16 +45,70 @@ function BoardLite_makePlace(b, turn, dest, wallType) {
 }
 
 
-function BoardLite_getPlays(b, turn, playsRef, cacheRef1, cacheRef2, getMinCache, debug) {  //#thanks for the memories
-        
-    var oppTurn = OPP_TURN[turn];
-    var oppPawn = b[oppTurn];
+
+function BoardLite_makeRandomMove(b, turn, playsRef) {
+    //playsRefs should already have move/jumps    
+    var randIndex = rnd(playsRef[MAX_PLAYS]);//Math.floor(Math.random() *  playsRef[MAX_PLAYS]);	
+    var randTypeDest = playsRef[randIndex];	
+    b[turn] = randTypeDest & MASK_DEST; 
+}
+
+function BoardLite_makeRandomPlace(b, turn, playsRef) {
+    //As an optimization, instead of geting all valid places, instead pick a place, 
+    //and then check for validity    
+    for (var i = 0; i < 3; i++) {
+        var randType = rnd(10) < 5? TYPE_HORZ : TYPE_VERT; //Math.random() <= 0.5? TYPE_HORZ : TYPE_VERT;
+        var randDest = rnd(WALL_SPACES);//Math.floor(Math.random() * WALL_SPACES);
+        if (BoardLite_canPlace(b, randDest, randType)) {           
+            BoardLite_makePlace(b, turn, randDest, randType);
+            return true;
+        }
+         
+    }
+    //Just move on min path instead
+    var distOrigin = BoardLite_Path_Min_getDistAndOrigin(b, turn);
+    var dest = distOrigin[1] & MASK_DEST;
+    BoardLite_makeMove(b, turn, dest);    
+    return false;
+}
+
+
+function BoardLite_getPlays(b, turn, playsRef, cacheRef1, cacheRef2, getMinCache) {  //#thanks for the memories
+            
 
     //Get Moves
     BoardLite_addMoves(b, turn, playsRef);
     BoardLite_addJumps(b, turn, playsRef);
 
-    
+    var gameOverScore = BoardLite_winOrBlock(b, turn, playsRef);
+    if (gameOverScore != IN_PLAY) return gameOverScore;
+   
+    //Add Places
+    else if (b[WALL_COUNT+turn] > 0) {
+        //Populate cachePath - assume this will succeed, or we have bigger problems...
+        if (getMinCache) {            
+            BoardLite_Path_Min_populateCache(b, PLAYER1, cacheRef1); 
+            BoardLite_Path_Min_populateCache(b, PLAYER2, cacheRef2); 
+        }
+        else {
+            BoardLite_Path_DFS_populateCache(b, PLAYER1, cacheRef1);
+            BoardLite_Path_DFS_populateCache(b, PLAYER2, cacheRef2);
+        }        
+       
+        BoardLite_addPlaces(b, TYPE_HORZ, playsRef, cacheRef1, cacheRef2); 
+        BoardLite_addPlaces(b, TYPE_VERT, playsRef, cacheRef1, cacheRef2);         
+    }        
+    //Else just use the moves and jumps    
+
+    return IN_PLAY; //In play
+}
+
+function BoardLite_winOrBlock(b, turn, playsRef) {
+    var oppTurn = OPP_TURN[turn];
+    var oppPawn = b[oppTurn];
+    var oppPawnR = FLOOR_POS_TO_R[oppPawn];
+
+    //Todo: could check for wins in [BoardLite_addMoves]?
     //Take win if available
     for (var m = 0; m < playsRef[MAX_PLAYS]; m++) {
         var typeDest = playsRef[m];
@@ -66,8 +122,7 @@ function BoardLite_getPlays(b, turn, playsRef, cacheRef1, cacheRef2, getMinCache
         }
     }
 
-    //Block opponent if necessary 
-    var oppPawnR = FLOOR_POS_TO_R[oppPawn];
+    //Block opponent if necessary     
     if (oppPawnR == PRE_WIN_ROWS[oppTurn] || oppPawnR == PRE_WIN_ROWS2[oppTurn]) {
         var betweenIndex = (oppPawn*8)+(DIR_ADVANCE[oppTurn]*2);        
         var wallPos1 = WALLS_BETWEEN[betweenIndex];
@@ -83,14 +138,14 @@ function BoardLite_getPlays(b, turn, playsRef, cacheRef1, cacheRef2, getMinCache
                 
             if (maxPlays) { //Only return the moves that will block
                 playsRef[MAX_PLAYS] = maxPlays;
-                return 0;
+                return MUST_PLAY;
             }                  
             else return -INFINITY; //Unable to block
         }
     }   
-   
+
     //Check for one or more players with no walls
-    if (b[WALL_COUNT1] == 0 || b[WALL_COUNT2] == 0) {
+    else if (b[WALL_COUNT1] == 0 || b[WALL_COUNT2] == 0) {
         var wallCount1 = b[WALL_COUNT+turn];
         var wallCount2 = b[WALL_COUNT+oppTurn];
         
@@ -120,28 +175,9 @@ function BoardLite_getPlays(b, turn, playsRef, cacheRef1, cacheRef2, getMinCache
         else { //Opp Player has no walls
             if (minDist1 <= minDist2) return INFINITY;            
         }
-    }    
-   
-    //Add Places
-    else {
-        //Populate cachePath - assume this will succeed, or we have bigger problems...
-        if (getMinCache) {            
-            BoardLite_Path_Min_populateCache(b, PLAYER1, cacheRef1); 
-            BoardLite_Path_Min_populateCache(b, PLAYER2, cacheRef2); 
-        }
-        else {
-            BoardLite_Path_DFS_populateCache(b, PLAYER1, cacheRef1);
-            BoardLite_Path_DFS_populateCache(b, PLAYER2, cacheRef2);
-        }        
-       
-        BoardLite_addPlaces(b, TYPE_HORZ, playsRef, cacheRef1, cacheRef2); 
-        BoardLite_addPlaces(b, TYPE_VERT, playsRef, cacheRef1, cacheRef2);         
-    }        
-    //Else just use the moves and jumps    
-
-    return 0; //In play
+    } 
+    return IN_PLAY;   
 }
-
 
 function BoardLite_addMoves(b, turn, playsRef) { //playsRef passed by reference        
         
@@ -382,6 +418,7 @@ function BoardLite_toString(b, turn) {
 }
 
 function BoardLite_fromString(boardStr) {
+    boardStr = boardStr.toUpperCase();
     var b = BoardLite_new();
 
     //Get walls

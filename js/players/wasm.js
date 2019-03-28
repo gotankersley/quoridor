@@ -1,5 +1,5 @@
 var WasmPlayer = (function() { //Poor man's namespace (module pattern)
-	const WASM_FILE = '/quoridor/js/wasm/quoridor.wasm';
+	const WASM_FILE = '/quoridor/wasm/quoridor.wasm';
 
 	const OUTPUT = 24;
 

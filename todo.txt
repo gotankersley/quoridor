@@ -20,9 +20,6 @@ Questions:
 - Account for jumps in Min path 
 
 
-getSmartRandom
-
-
 Names:
 - Status Quo
 x Minotaur
@@ -38,29 +35,31 @@ x Minotaur
 
 
 Heuristic:
-walls behind / in front
-naive dist
-
 *walls remaining
 *min path dist
+*manhattan dist
+
+walls behind / in front
+
 ? of end row unblocked v / h
 ? length of max path / worst path (if player uses all current walls)
 
 path includes jump (edge jump / diag jump)
 number of can't places
 pawn moves avail
-path includes home row (bonus / penalty)
+
 cachePath - walls = unblockable places
-negative distance on path 
+negative distance on path = path includes home row (bonus / penalty)
 which pawn further down the board
 wall count ratio between players
 does blocking length own path?
 on critical path bonus
 delta between wall count prev, and place (if it goes up alot, then it's significant)
+past mid point
 
-probably not:
+? ratio between naive and min path = obstacles
+?
 - area can move
-- ratio between naive and min path = obstacles
 - path overlap / same path as opponent
 - in corner / in center
 - gap(s)
@@ -89,4 +88,3 @@ http://localhost/quoridor/#HNNNNNNNNHVNVNNNNHNNNNNNHNVHVNNNHNNNNHNHNNNVVNNNNHNHN
 http://localhost/quoridor/#HNHNHNNNHNNHNHVNHNHNNNHNHNNNNVNNNVNHNHNHNNNNNNNNNNNHNNNNNNNNNNNN2C303G500
 http://localhost/quoridor/#HNNNNNNNNHVNVNNNNHNNNNNNHNVHVNNNHNNNNHNHNNNVVNNNNHNHNNNNHNVNNNNN2B400A402
 
-https://upcommons.upc.edu/bitstream/handle/2117/127676/131875.pdf?sequence=1&isAllowed=y

@@ -1,22 +1,20 @@
-var MENU_PREFIX = 'bt.';
+var MENU_PREFIX = 'qo.';
 //Struct MenuProperties
 function MenuProperties() {	
-	this.player1 = PLAYER_HUMAN;
-	this.player2 = PLAYER_HUMAN;
+	this.player1 = PLAYER_RANDOM;
+	this.player2 = PLAYER_RANDOM;
 
-	//Display
-	this.showLabels = this.getDefault('showLabels', false);
-	this.showPath = this.getDefault('showPath', true);
-	this.showDistance = this.getDefault('showDistance', true);
-
-	//Debug
-	this.showGrid = false;
-	this.showCenters = false;
-	this.showPositions = this.getDefault('showPositions', false);
-	this.showCoordinates = true;//this.getDefault('showCoordinates', true);
-	this.pathFindingBFS = true;
-	this.animSpeed = 500;	
-	this.showWallPlacer = this.getDefault('showWallPlacer', false);
+	//Options
+	this.initialTQBN = this.getDefault('initialTQBN', '');
+	this.randInitialMoves = this.getDefault('randInitialMoves', 0);
+	this.moveCap = this.getDefault('moveCap', 200);
+	
+	//Settings
+    this.matches = parseInt(this.getDefault('matches', 10));
+	this.alternateStart = this.getDefault('alternateStart', true);
+    
+    this.start = startMatches;
+    this.stop = stopMatches;
 }
 
 MenuProperties.prototype.getDefault = function(propertyName, defaultValue) {
@@ -34,7 +32,7 @@ MenuProperties.prototype.getDefault = function(propertyName, defaultValue) {
 //Class MenuManager
 function MenuManager() {
 	var PLAYER_OPTIONS = {
-		Human:PLAYER_HUMAN, 	
+		//Human:PLAYER_HUMAN, 	
 		Random:PLAYER_RANDOM,		
 		Weak:PLAYER_HEURISTIC,		
 		Theseus:PLAYER_THESEUS,	
@@ -50,29 +48,18 @@ function MenuManager() {
 	
 	//Options - secondary root	
 	var optionsMenu = this.rootMenu.addFolder('Options');			
-	
-	//Display menu
-	var displayMenu = optionsMenu.addFolder('Display');	
-	displayMenu.add(this.properties, 'showLabels').onChange(this.persistChange);		
-	displayMenu.add(this.properties, 'showPath').onChange(this.persistChange);
-	displayMenu.add(this.properties, 'showDistance').onChange(this.persistChange);
-		
-
-	//Debug menu
-	var debugMenu = optionsMenu.addFolder('Debug');	
-	debugMenu.add(this.properties, 'showGrid');
-	debugMenu.add(this.properties, 'showCenters');	
-	debugMenu.add(this.properties, 'showPositions').onChange(this.persistChange);
-	debugMenu.add(this.properties, 'showCoordinates');
-	debugMenu.add(this.properties, 'showWallPlacer').onChange(this.persistChange);
-	debugMenu.add(this.properties, 'animSpeed', 0, 5000);	
-
-	//Links menu
-	//var linksMenu = optionsMenu.addFolder('Links');				
+    optionsMenu.add(this.properties, 'initialTQBN').onChange(this.persistChange);						
+    optionsMenu.add(this.properties, 'moveCap').onChange(this.persistChange);						
+    //optionsMenu.add(this.properties, 'randInitialMoves').onChange(this.persistChange);						
 	
 	//Root menu			
 	this.rootMenu.add(this.properties, 'player1', PLAYER_OPTIONS).onChange(this.onChangePlayer);
-	this.rootMenu.add(this.properties, 'player2', PLAYER_OPTIONS).onChange(this.onChangePlayer);	
+    this.rootMenu.add(this.properties, 'player2', PLAYER_OPTIONS).onChange(this.onChangePlayer);	
+    
+	this.rootMenu.add(this.properties, 'matches').onChange(this.persistChange);
+	this.rootMenu.add(this.properties, 'alternateStart').onChange(this.persistChange);			
+    this.rootMenu.add(this.properties, 'start');
+    this.rootMenu.add(this.properties, 'stop');
 	
 	//Configure button hack
 	var propertyNodes = document.querySelectorAll('.dg.main .property-name');			
@@ -97,23 +84,23 @@ function MenuManager() {
 }
 
 //Events
-MenuManager.prototype.onChangePlayer = function(val) {
+MenuManager.prototype.onChangePlayer = function(val, player) {
 	
 	
 	var selectedPlayer = parseInt(val);			
 	
 	//Show / Hide player config buttons
-	var configButton = document.querySelectorAll('.config-button.' + this.property)[0];
-	if (configButton) {
-		if (selectedPlayer == PLAYER_NETWORK) configButton.style.visibility = 'visible';		
-		else if (selectedPlayer == PLAYER_RANDOM) configButton.style.visibility = 'visible';		
+	if (typeof(player) == 'undefined') player = this.property;
+	var configButton = document.querySelectorAll('.config-button.' + player)[0];
+	if (configButton) {		
+		if (selectedPlayer == PLAYER_RANDOM) configButton.style.visibility = 'visible';		
 		else if (selectedPlayer == PLAYER_THESEUS) configButton.style.visibility = 'visible';		
+		else if (selectedPlayer == PLAYER_NETWORK) configButton.style.visibility = 'visible';	
 		else configButton.style.visibility = 'hidden';
 	}
 	else configButton.style.visibility = 'hidden';
 
-	game.players = [parseInt(menu.player1), parseInt(menu.player2)]; //Information hiding - pshaww...		
-	game.play();
+	game.players = [parseInt(menu.player1), parseInt(menu.player2)]; //Information hiding - pshaww...			
 }
 
 

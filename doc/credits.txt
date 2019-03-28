@@ -5,3 +5,5 @@ Quoridor Strats:
 https://quoridorstrats.wordpress.com/notation/
 
 http://en.gigamic.com/files/media/fiche_pedagogique/educative-sheet_quoridor-english.pdf
+
+https://upcommons.upc.edu/bitstream/handle/2117/127676/131875.pdf?sequence=1&isAllowed=y

@@ -11,6 +11,7 @@ const PLAYER_NETWORK = 4;
 const PLAYER_ALPHABETA = 5;
 const PLAYER_WASM = 6;
 const PLAYER_MONTECARLO = 7;
+const PLAYER_MCTS = 8;
 
 
 const EVENT_INVALID = 0;
@@ -18,6 +19,7 @@ const EVENT_PLAYED = 1;
 const EVENT_GAME_OVER = 2;
 const EVENT_BOARD_UPDATE = 3;
 const EVENT_SUGGEST = 4;
+const EVENT_MESSAGE = 5;
 
 const MODE_PLAY = 0;
 const MODE_UNDO = 1;
@@ -140,6 +142,7 @@ Game.prototype.play = function() {
 		case PLAYER_THESEUS: TheseusPlayer.getPlay(board, this.onPlayed); break; //Theseus		
 		case PLAYER_WASM: WasmPlayer.getPlay(board, this.onPlayed); break; //Wasm	
 		case PLAYER_MONTECARLO: MonteCarloPlayer.getPlay(board, this.onPlayed); break; //MonteCarlo	
+		case PLAYER_MCTS: MCTSPlayer.getPlay(board, this.onPlayed); break; //MCTS	
 		default: alert('Invalid player');
 	}		
 }
@@ -169,6 +172,7 @@ Game.prototype.onPlayed = function(move) {
 Game.prototype.onPlayerConfig = function(player) {
 	if (this.players[player] == PLAYER_NETWORK) NetworkPlayer.configPlayer(player);
 	else if (this.players[player] == PLAYER_RANDOM) RandomPlayer.configPlayer(player);
+	else if (this.players[player] == PLAYER_THESEUS) TheseusPlayer.configPlayer(player);
 			
 }
 
@@ -192,6 +196,24 @@ Game.prototype.onSuggestMove = function() {
 	//			
 	//	
 	//}
+}
+
+Game.prototype.sendMessage = function(msg) {
+	this.gameEvents[EVENT_MESSAGE](msg);
+}
+
+Game.prototype.getPlayerName = function(player) {
+	switch (player) {		
+		case PLAYER_RANDOM: return 'Random'; 
+		case PLAYER_HEURISTIC: return 'Heuristic';
+		case PLAYER_ALPHABETA: return 'Minotaur';
+		case PLAYER_NETWORK: return 'Network'; 
+		case PLAYER_THESEUS: return 'Theseus'; 
+		case PLAYER_WASM: return 'Wasm';
+		case PLAYER_MONTECARLO: return 'MonteCarlo';
+		case PLAYER_MCTS: return 'MCTS';
+		default: return 'Unknown';
+	}		
 }
 
 //end class Game

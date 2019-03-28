@@ -330,6 +330,10 @@ function BoardLite_isWallBetween(b, pos, dir) {
     else return false;
 }
 
+function BoardLite_score3(b, turn) {
+
+}
+
 function BoardLite_score2(b, turn) {
     var oppTurn = OPP_TURN[turn];            
            
@@ -380,6 +384,22 @@ function BoardLite_scoreSide(b, turn, minDist) {
     return (
         (b[WALL_COUNT+turn] * WEIGHT_WALLCOUNT) +
         ((FLOOR_SPACES-minDist) * WEIGHT_PATH)
+    );
+}
+
+function BoardLite_scoreSide3(b, turn, minDist) {  
+    var pawn = b[turn]; 
+    var oppTurn = OPP_TURN[turn]; 
+    
+    var scoreManhattan = (8-THEORETICAL_MIN[turn][pawn])/8;
+    var scoreMinDist = (FLOOR_SPACES-minDist)/FLOOR_SPACES;
+    var scoreWallCount = b[WALL_COUNT+turn]/10;
+    var scoreWallRatio = ((b[WALL_COUNT+turn]-b[WALL_COUNT+oppTurn])+10)/20; //[-10, 0, 10]
+    return (
+        (scoreManhattan * WEIGHT_MANHATTAN) + 
+        (scoreWallCount * WEIGHT_WALLCOUNT) +
+        (scoreMinDist * WEIGHT_MINDIST) +
+        (scoreWallRatio * WEIGHT_WALL_RATIO)
     );
 }
 

@@ -1,12 +1,13 @@
 var TheseusPlayer = (function() { //Picket namespace (Module pattern)			
 
-	
+	var extraParams = [INVALID,INVALID];		
 	var playerId = +(new Date()); //Timestamp
-	
+	const THESEUS_URL = 'https://schneiderbox.net/theseus';	
+
 	function getPlay(board, onPlayed) {			
 		var turn = board.turn;
-		
-		var url = 'https://schneiderbox.net/theseus';				
+		var param = getDefaultParam(turn);
+		var url = THESEUS_URL + '?' + param;		
 		
 		var qsStart = (url.lastIndexOf('?') > 0)? '&' : '?'; //Horrible format
 		var queryString = qsStart + 'id=' + playerId + '&tqbn=' + board.toString().toUpperCase();
@@ -46,8 +47,27 @@ var TheseusPlayer = (function() { //Picket namespace (Module pattern)
 		xhr.send();
 	}
 	
+	function getDefaultParam(player) {
+		var param = extraParams[player];
+		if (param == INVALID) {		
+			var defaultParam = menu.getDefault('extraParam' + player, null); 
+			if (!defaultParam) return '';
+			else return defaultParam;
+		}
+		else return param;
+	}
 	
+	function configPlayer(player) {
+		var oldParam = getDefaultParam(player);		
+		var newParam = prompt('Add querystring params: (e.g. iterations=100)\r\n ' + THESEUS_URL + '?<key=value&...>', oldParam );
+		if (!newParam) return;
+		var propertyName = MENU_PREFIX + 'extraParam' + player;	
+		localStorage.setItem(propertyName, newParam);
+		extraParams[player] = newParam;
+		
+	}
+
 	//Exports
-	return {getPlay:getPlay};
+	return {getPlay:getPlay, configPlayer:configPlayer};
 
 })(); //End PicketPlayer namespace

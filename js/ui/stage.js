@@ -75,26 +75,7 @@ var Stage = (function() { //Stage namespace (module pattern)
 	var animInfo = {};	
 	var mode = MODE_PLAY;
 		
-			
-	function getInvalidMessage(invalidCode) {
-		switch(invalidCode) {
-			case VALID: return 'Valid';
-			case INVALID_MOVE: throw new Error('Invalid: can only move 1'); //return 'Nope: can only move one square...'; 
-			case INVALID_MOVE_WALL: return 'Nope: unable to move through wall...'; 			
-			case INVALID_JUMP: return 'Nope: jumps must be over a pawn or diagonal with a wall behind...'; 
-			case INVALID_SOURCE: return 'Nope: not your pawn...'; 
-			case INVALID_TURN: return 'Nope: wrong player...';
-			case INVALID_BOUNDS: return 'Nope: must move on the board...';
-			case INVALID_DESTINATION: return 'Nope: destination not empty...';
-			case INVALID_PATH_OWN: return 'Nope: you can\'t entirely block your own pawn\'s path...';
-			case INVALID_PATH_OPP: return 'Nope: you can\'t entirely block the other pawn\'s path...';
-			case INVALID_WALL_COUNT: return 'Nope: you are out of walls to place...';
-			case INVALID_PLACE_INTERSECT: return 'Nope: this intersects an existing wall...';
-			case INVALID_SILENT: return ''; //Fail silently
-			default: return 'Nope: invalid move...';
-		}
-	}
-	
+					
 
 	function init(newGame) { 	
 
@@ -126,6 +107,7 @@ var Stage = (function() { //Stage namespace (module pattern)
 		game.addEventListener(EVENT_GAME_OVER, onGameOver.bind(this));
 		game.addEventListener(EVENT_PLAYED, onGamePlayed.bind(this));
 		game.addEventListener(EVENT_BOARD_UPDATE, onGameBoardUpdate.bind(this));		
+		game.addEventListener(EVENT_MESSAGE, sendMessage.bind(this));		
 		
 		draw(); 		
 	}

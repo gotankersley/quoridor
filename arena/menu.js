@@ -4,17 +4,25 @@ function MenuProperties() {
 	this.player1 = PLAYER_RANDOM;
 	this.player2 = PLAYER_RANDOM;
 
+	//Display
+	this.showMoveCount = this.getDefault('showMoveCount', true);
+	this.showWinDelta = this.getDefault('showWinDelta', true);
+	this.showDuration = this.getDefault('showDuration', true);
+	this.showAvgMoveTime = this.getDefault('showAvgMoveTime', true);
+
 	//Options
 	this.initialTQBN = this.getDefault('initialTQBN', '');
-	this.randInitialMoves = this.getDefault('randInitialMoves', 0);
-	this.moveCap = this.getDefault('moveCap', 200);
+	this.moveLimit = this.getDefault('moveLimit', 200);
+	this.earlyTermination = this.getDefault('earlyTermination', false);
+	//this.randInitialMoves = this.getDefault('randInitialMoves', 0);
+
 	
 	//Settings
     this.matches = parseInt(this.getDefault('matches', 10));
 	this.alternateStart = this.getDefault('alternateStart', true);
     
-    this.start = startMatches;
-    this.stop = stopMatches;
+    this.start = function() { arena.start(); }
+    this.stop = function() { arena.stop(); }
 }
 
 MenuProperties.prototype.getDefault = function(propertyName, defaultValue) {
@@ -46,10 +54,19 @@ function MenuManager() {
 	this.properties = new MenuProperties();
 	this.rootMenu = new dat.GUI();	
 	
+	//Display - secondary root	
+	var displayMenu = this.rootMenu.addFolder('Display');			
+	displayMenu.add(this.properties, 'showWinDelta').onChange(this.persistChangeAndUpdate);												
+	displayMenu.add(this.properties, 'showMoveCount').onChange(this.persistChangeAndUpdate);												
+	displayMenu.add(this.properties, 'showDuration').onChange(this.persistChangeAndUpdate);		
+	displayMenu.add(this.properties, 'showAvgMoveTime').onChange(this.persistChangeAndUpdate);												
+
+	
 	//Options - secondary root	
 	var optionsMenu = this.rootMenu.addFolder('Options');			
     optionsMenu.add(this.properties, 'initialTQBN').onChange(this.persistChange);						
-    optionsMenu.add(this.properties, 'moveCap').onChange(this.persistChange);						
+    optionsMenu.add(this.properties, 'moveLimit').onChange(this.persistChange);						
+    optionsMenu.add(this.properties, 'earlyTermination').onChange(this.persistChange);						
     //optionsMenu.add(this.properties, 'randInitialMoves').onChange(this.persistChange);						
 	
 	//Root menu			
@@ -83,6 +100,7 @@ function MenuManager() {
 	
 }
 
+
 //Events
 MenuManager.prototype.onChangePlayer = function(val, player) {
 	
@@ -106,5 +124,12 @@ MenuManager.prototype.onChangePlayer = function(val, player) {
 
 MenuManager.prototype.persistChange = function(val) {
 	var propertyName = MENU_PREFIX + this.property;	
-	localStorage.setItem(propertyName, val);	
+	localStorage.setItem(propertyName, val);		
 }
+
+MenuManager.prototype.persistChangeAndUpdate = function(val) {
+	var propertyName = MENU_PREFIX + this.property;	
+	localStorage.setItem(propertyName, val);	
+	arena.display();	
+}
+

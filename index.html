@@ -41,24 +41,31 @@
 <div id="messageContainer"><div id="message"></div></div>
 <script>
 	var menu;
-	
-	Url.init(function(e) {
-	var hash = window.location.hash.replace('#', '');		
-		if (hash.length >= 10) {
-			var newBoard = new Board(hash);			
-			game.updateBoard(newBoard);
-		}
-	});
-	
-	var boardStr;
-	if (performance.navigation.type == 0) { //First time on this page
-		var hash = window.location.hash.replace('#', '');
-		if (hash.length >= TQBN_SIZE) boardStr = hash;		
-		else Url.setHash(''); //Clear state
+	var game;
+
+	if (location.search.indexOf('?load=') === 0) {
+		var gameStr = location.search.substr(6);
+		game = new Game();
+		game.load(gameStr);
 	}
-	else Url.setHash('');  //Refresh - clear state
-	
-	var game = new Game(boardStr);		
+	else {
+		Url.init(function(e) {
+		var hash = window.location.hash.replace('#', '');		
+			if (hash.length >= 10) {
+				var newBoard = new Board(hash);			
+				game.updateBoard(newBoard);
+			}
+		});
+		
+		var boardStr;
+		if (performance.navigation.type == 0) { //First time on this page
+			var hash = window.location.hash.replace('#', '');
+			if (hash.length >= TQBN_SIZE) boardStr = hash;		
+			else Url.setHash(''); //Clear state
+		}
+		else Url.setHash('');  //Refresh - clear state
+		game = new Game(boardStr);		
+	}
 	Stage.init(game); 
 	
 

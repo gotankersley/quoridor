@@ -40,7 +40,36 @@ function Game(boardStr) {
 	this.gameEvents = {}; //Callbacks to update UI		
 	this.suggesting = false;
 	this.mode = MODE_PLAY;
+	this.moves = [];
 }
+
+Game.prototype.load = function(gameStr) {
+	
+	var moves = gameStr.split(',');
+	
+	for (var m = 0; m < moves.length; m++) {
+		var qmn = moves[m];
+		var move = this.board.qmnToMove(qmn);
+		var moveCode = this.board.makeMove(move);
+		var boardStr = this.board.toString();
+		if (moveCode != VALID) throw new Error('Error loading move (' + m + '): ' + qmn + ', ' + boardStr);					
+		
+		this.history.push(boardStr);
+		this.memory[boardStr] = true;
+		this.board.changeTurn();
+	}
+	return true;
+}
+
+Game.prototype.save = function() { //Serialize entire game
+	var gameStr = '';
+	for (var m = 0; m < this.moves.length; m++) {
+		var moveStr = this.moves[m];
+		gameStr += moveStr + ',';
+	}
+	return gameStr.substr(0, gameStr.length-1);
+}
+
 
 
 Game.prototype.updateBoard = function(newBoard) {
@@ -156,7 +185,7 @@ Game.prototype.onPlayed = function(move) {
 	
 	var moveCode = board.makeMove(move);
 	if (moveCode != VALID) return self.gameEvents[EVENT_INVALID]('', moveCode);	
-	
+	self.moves.push(board.qmnFromMove(move));
 	
 	//History and Memory
 	self.logCurrentState(board);	
@@ -214,6 +243,22 @@ Game.prototype.getPlayerName = function(player) {
 		case PLAYER_MCTS: return 'MCTS';
 		default: return 'Unknown';
 	}		
+}
+
+Game.prototype.swapPlayers = function() {
+	var tmpPlayer = this.players[PLAYER1];
+	this.players[PLAYER1] = this.players[PLAYER2];
+	this.players[PLAYER2] = tmpPlayer;
+}
+
+Game.prototype.canTerminateEarly = function() {
+	var turn = this.board.turn;
+	var b = BoardLite_fromBoard(this.board);
+	var plays = new Uint16Array(MAX_PLAYS+1);	
+	var gameOverScore = BoardLite_winOrBlock(b, turn, plays);
+	if (gameOverScore == INFINITY) return turn;		
+	else if (gameOverScore == -INFINITY) return OPP_TURN[turn];
+	return INVALID;
 }
 
 //end class Game

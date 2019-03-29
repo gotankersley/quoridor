@@ -765,8 +765,19 @@ Board.prototype.qmnToMove = function(qmn) {
 			type: wall
 		}
 	}
-	else throw new Error('Invalid QMN: ' + qmn);
-	return INVALID;
+	else throw new Error('Invalid QMN: ' + qmn);	
+}
+
+Board.prototype.qmnFromMove = function(move) {	
+	//Move pawn
+	if (move.type == FLOOR) return this.qmnFromRC({r:move.dr, c:move.dc}); 
+
+	//Place wall
+	else { 
+		var wallType = move.type == H_WALL? CHAR_H_WALL : CHAR_V_WALL;
+		return this.qmnFromRC(move) + wallType; 		
+	}
+		
 }
 
 Board.prototype.getTurnedDir = function (r, c) {

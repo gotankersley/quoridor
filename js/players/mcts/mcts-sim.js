@@ -62,7 +62,12 @@ var MCTSPlayer = (function() { //Poor man's namespace (module pattern)
 			//Select
 			var node = uctSelect(root);
 			if (node.score == INFINITY) backProp(node, -INFINITY);
-			else if (node.score == -INFINITY) backProp(node, INFINITY);						
+			else if (node.score == -INFINITY) backProp(node, INFINITY);
+			else if (node.visits < 5) {
+				var boardCopy = node.board.slice();
+				var score = simulate(boardCopy, turn);
+				backProp(node, -score);
+			}
 			else expandScoreAndPropagate(node); //Expand, Score and Backpropagate 
 
 		}
@@ -144,7 +149,8 @@ var MCTSPlayer = (function() { //Poor man's namespace (module pattern)
 			if (type & TYPE_MOVE_JUMP) BoardLite_makeMove(childBoard, turn, dest);
 			else BoardLite_makePlace(childBoard, turn, dest, type);
 			
-			var score = BoardLite_score2(childBoard, turn);
+			var score = simulate(childBoard, turn);
+			//var score = BoardLite_score2(childBoard, turn);
 			
 			var child = {visits:1, score:score, board:childBoard, turn:OPP_TURN[turn], parent:node, children:[], rowId:rowIds[newDepth]++, depth:newDepth};
 			node.children.push(child);

@@ -75,7 +75,7 @@ function BoardLite_Path_DFS_populateCache(b, turn, cacheRef) { //Depth First Sea
 
 /*
 Note about G* Methods:
-There are 3 different methods which, while similar, have slightly different purposes:
+There are 4 different methods which, while similar, have slightly different purposes:
 1. BoardLite_Path_Min_getDist - Simplest and fastest, only returns the numerical distance
 -> Use for scoring
 
@@ -84,6 +84,9 @@ There are 3 different methods which, while similar, have slightly different purp
 
 3. BoardLite_Path_Min_populateCache - Populates an array of walls that intersect the min path, and appends the path length on the end
 -> Used when getting available wall places to figure out if the minPath needs to be recalculated
+
+4. BoardLite_Path_getScoreMeta - returns [minDist, overlap, circumlocation, origin] for scoring
+-> Used for more accurate scoring
 */
 function BoardLite_Path_Min_getDist(b, turn) { //G*  - Distance only
     
@@ -296,6 +299,95 @@ function BoardLite_Path_Min_populateCache(b, turn, cacheRef) { // Populate walls
     return;
 }
 
+function BoardLite_Path_getScoreMeta(b, turn, overlapRef) { //returns [minDist, overlap, circumlocation, origin] for scoring
+
+    var pawn = b[turn];        
+    
+    g_breadcrumbs = g_breadcrumbs.fill(FLOOR_SPACES); //Use for distance
+    g_breadcrumbs[pawn] = 0; 
+    var pawnTheoMin = THEORETICAL_MIN[turn][pawn];
+
+    g_stack[0] = pawn;
+    var stackTop = 1;
+
+    var minPathLength = FLOOR_SPACES; //Current best
+    var minPrev = INVALID;
+    
+    //The following label is used to 'continue' from a nested loop    
+    mainLoop:
+    while (stackTop > 0) {
+        var topPos = g_stack[--stackTop];  //Pop the stack      
+        var dist = g_breadcrumbs[topPos]+1;
+        
+        if (dist+THEORETICAL_MIN[turn][topPos] >= minPathLength) continue; //Already have a better solution
+        
+        var searchDests = SEARCH_DESTS_BY_PLAYER_POS[turn][topPos];                
+        for (var d = 0; d < searchDests.length; d+=3) {
+            
+            var dir = searchDests[d]; //Dir 
+            var destR = searchDests[d+1]; //DestR
+            var dest = searchDests[d+2]; //Dest pos
+            
+            if (dist >= g_breadcrumbs[dest]) continue; //Already checked - or not better
+            else if (BoardLite_isWallBetween(b, topPos, dir)) continue; //Wall between
+            else if (destR == WIN_ROWS[turn]) {  //End reached               
+                g_cachePrev[dest] = topPos;
+
+                //Straight line - Can't do better than this   
+                if (dist == pawnTheoMin) return BoardLite_Path_addMetadata(turn, dest, pawn, overlapRef, pawnTheoMin);                                
+
+                //Maybe not min - see if any other ones in the stack need to be considered
+                else if (dist < minPathLength) {                    
+                    minPathLength = dist;
+                    minPrev = dest;
+                    
+                    do { //Pop down looking for better                                    
+                        var potentialPos = g_stack[--stackTop]; 
+                        var theoDist = g_breadcrumbs[potentialPos]+THEORETICAL_MIN[turn][potentialPos];                        
+                        if (theoDist < minPathLength) {
+                            stackTop++; //Add back to stack
+                            continue mainLoop;             
+                        }                
+                    }
+                    while (stackTop > 0);
+                    
+                    //Nothing better found, so this must be the min                    
+                    return BoardLite_Path_addMetadata(turn, minPrev, pawn, overlapRef, minPathLength);
+                }                
+            }
+                
+            g_stack[stackTop++] = dest; //Push on to stack
+            g_breadcrumbs[dest] = dist;     
+            g_cachePrev[dest] = topPos;
+        }
+
+    }
+        
+    
+    return BoardLite_Path_addMetadata(turn, minPrev, pawn, overlapRef, minPathLength);
+}
+
+
+function BoardLite_Path_addMetadata(turn, start, end, overlapRef, minDist) { //Used by BoardLite_Path_getScoreMeta once path has been found
+    
+    var cur = start;
+    var prev = g_cachePrev[start];
+    var dir = POS_DELTA_TO_DIR[9+cur-prev]; 
+    var overlap = 0;
+    var circumlocation = 0;
+    
+    while (prev != end) {
+        overlapRef[prev]++;
+        if (overlapRef[prev] > 1) overlap++;
+        circumlocation += CIRCUMLOCATION_BY_DIR[turn][dir];
+        cur = prev;
+        prev = g_cachePrev[prev];                        
+        dir = POS_DELTA_TO_DIR[9+prev-cur];
+    }
+    //if (i >= 100) throw new Error('stuck');
+    var origin = cur;
+    return [minDist, overlap, circumlocation, origin];
+}
 function BoardLite_addWallsToCachePath(prev, cur, cacheRef) {
     //Requires g_cachePrev to be populated
     var prevDir = POS_DELTA_TO_DIR[9+prev-cur];

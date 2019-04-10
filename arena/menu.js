@@ -45,6 +45,7 @@ function MenuManager() {
 		Weak:PLAYER_HEURISTIC,		
 		Theseus:PLAYER_THESEUS,	
 		Minotaur:PLAYER_ALPHABETA,	
+		'EvilKingMinos':PLAYER_MINOTAUR_PLUS,			
 		Network:PLAYER_NETWORK,				
 		//wasm:PLAYER_WASM,	
 		//MonteCarlo:PLAYER_MONTECARLO,

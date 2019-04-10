@@ -1,3 +1,12 @@
+//Weights - MOVE to AI?
+const WEIGHT_WALLCOUNT = 1;
+const WEIGHT_PATH = 100;
+const WEIGHT_OVERLAP = 50; 
+const WEIGHT_CIRCUMLOCATION = 3; //penalty
+const WEIGHT_NO_PLACE = 4; 
+const WEIGHT_PAST_MEDIAN = 5;
+const WEIGHT_PAST_OPPONENT = 11; 
+
 const WALL_SIZE = 8;
 const WALL_SPACES = 64;
 const FLOOR_SIZE = 9;
@@ -30,7 +39,10 @@ const TYPE_WALL = TYPE_HORZ | TYPE_VERT;
 const MASK_DEST = 0xff;
 const MASK_TYPE = 0xff00;
 
-
+const IDX_SCORE_DIST = 0;
+const IDX_SCORE_OVERLAP = 1;
+const IDX_SCORE_CIRCUMLOCATION = 2;
+const IDX_SCORE_ORIGIN = 3;
 
 const DELTA_R_BY_DIR = [ 
 	-1, //NORTH
@@ -74,7 +86,18 @@ const WALLTYPE_BY_DIR = [
 	TYPE_VERT, //WEST
 ];
 
+const CIRCUMLOCATION_BY_DIR = [ //Backward
+	//Player1
+	[0,-2,-1,-1], //By dir: NSEW
 
+	//Player2
+	[-2,0,-1,-1], //By dir: NSEW
+]
+
+const MEDIAN_ROWS = [
+	[1,1,1,1,0,0,0,0], //Player 1
+	[0,0,0,0,1,1,1,1] //Player 2
+]
 
 const POS_DELTA_TO_DIR = [ //To use (9+srcPos-dstPos)
 	SOUTH, //-9

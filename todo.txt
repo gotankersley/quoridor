@@ -20,6 +20,10 @@ Questions:
 - Account for jumps in Min path 
 
 
+Cytoscape
+paper.js
+two.js
+
 Names:
 - Status Quo
 x Minotaur
@@ -73,6 +77,16 @@ metadata:
 - total # of walls not in play
 - ponder time
 
+
+Max states:
+	Here's the one I did the other day, where red's longest path is half the length of blue's.
+	https://gotankersley.bitbucket.io/quoridor/#NHNHNVNHHNVNHNHNNHNHNVNHHNVNHNHNNHNHNVNHHNVNHNHNNHNHNHNHHNHNHNHN1A910I110
+
+	And here's a silly spiral where both players have the longest possible path.
+	https://gotankersley.bitbucket.io/quoridor/#NHNHNHNHVNHNHNHNNVNHNHNVVNVNHNVNNVNHNVNVVNHNHNVNNHNHNHNVHNHNHNHN1A910I110
+	Oh, and here's one where red has an even bigger advantage over poor blue.
+	https://gotankersley.bitbucket.io/quoridor/#NHNHNHNVVNHNHNHNNHNHNHNVVNHNHNHNNHNHNHNVVNHNHNHNNHNHNHNHHNHNHNHN1A910I110
+
 States:
 http://localhost/quoridor/#NNNHNVNNNNNHNHNHNNNNHNHNNNNVHNVNNNNNVNNNHNNNNHNVNNNNNNVHNNNNNNHV1D302C300
 http://localhost/quoridor/#NNNHNVNNNHNVHNHNHVNNNNNNNNHNNVNNVHNVNNNNNVNNNVNNNNHVHNNHNNNNNNNN2I201H400
@@ -88,3 +102,5 @@ http://localhost/quoridor/#HNNNNNNNNHVNVNNNNHNNNNNNHNVHVNNNHNNNNHNHNNNVVNNNNHNHN
 http://localhost/quoridor/#HNHNHNNNHNNHNHVNHNHNNNHNHNNNNVNNNVNHNHNHNNNNNNNNNNNHNNNNNNNNNNNN2C303G500
 http://localhost/quoridor/#HNNNNNNNNHVNVNNNNHNNNNNNHNVHVNNNHNNNNHNHNNNVVNNNNHNHNNNNHNVNNNNN2B400A402
 
+Errata:
+http://glenix:8080/quoridor/#NHNHVNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNHNhNhNNNNNNhNhNN1E806B106

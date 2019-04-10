@@ -54,7 +54,7 @@ class Arena {
     
 
     //Event callbacks
-    onGameInvalid = (msg) => {
+    onGameInvalid = (msg, code) => {
         var message = msg + getInvalidMessage(code);
         console.log(message);
 

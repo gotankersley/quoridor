@@ -8,6 +8,7 @@ function MenuProperties() {
 	this.showLabels = this.getDefault('showLabels', false);
 	this.showPath = this.getDefault('showPath', true);
 	this.showDistance = this.getDefault('showDistance', true);
+	this.showWallColors = this.getDefault('showWallColors', false);
 
 	//Debug
 	this.showGrid = false;
@@ -16,7 +17,6 @@ function MenuProperties() {
 	this.showCoordinates = true;//this.getDefault('showCoordinates', true);
 	this.pathFindingBFS = true;
 	this.animSpeed = 500;	
-	this.showWallPlacer = this.getDefault('showWallPlacer', false);
 }
 
 MenuProperties.prototype.getDefault = function(propertyName, defaultValue) {
@@ -39,6 +39,7 @@ function MenuManager() {
 		Weak:PLAYER_HEURISTIC,		
 		Theseus:PLAYER_THESEUS,	
 		Minotaur:PLAYER_ALPHABETA,	
+		'EvilKingMinos':PLAYER_MINOTAUR_PLUS,	
 		Network:PLAYER_NETWORK,				
 		//wasm:PLAYER_WASM,	
 		//MonteCarlo:PLAYER_MONTECARLO,
@@ -56,6 +57,7 @@ function MenuManager() {
 	displayMenu.add(this.properties, 'showLabels').onChange(this.persistChange);		
 	displayMenu.add(this.properties, 'showPath').onChange(this.persistChange);
 	displayMenu.add(this.properties, 'showDistance').onChange(this.persistChange);
+	displayMenu.add(this.properties, 'showWallColors').onChange(this.persistChange);
 		
 
 	//Debug menu
@@ -64,7 +66,6 @@ function MenuManager() {
 	debugMenu.add(this.properties, 'showCenters');	
 	debugMenu.add(this.properties, 'showPositions').onChange(this.persistChange);
 	debugMenu.add(this.properties, 'showCoordinates');
-	debugMenu.add(this.properties, 'showWallPlacer').onChange(this.persistChange);
 	debugMenu.add(this.properties, 'animSpeed', 0, 5000);	
 
 	//Links menu

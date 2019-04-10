@@ -1,7 +1,3 @@
-//Weights - MOVE to AI
-const WEIGHT_WALLCOUNT = 1;
-const WEIGHT_PATH = 100;
-
 const PAWN = 0;
 const PAWN1 = 0; //Same as PLAYER1
 const PAWN2 = 1; //Same as PLAYER2
@@ -19,7 +15,7 @@ const BL_STRUCT_SIZE =
 
 
 
-const MAX_PLAYS = (WALL_SPACES*2)+5; //Max branching factor, 64x2 walls, 5 pawn moves
+const MAX_PLAYS = (WALL_SPACES*2)+6; //Max branching factor, 64x2 walls, 5 pawn moves
 const INFINITY = 1000000;
 const IN_PLAY = 0;
 const MUST_PLAY = 10;
@@ -48,7 +44,8 @@ function BoardLite_makePlace(b, turn, dest, wallType) {
 
 function BoardLite_makeRandomMove(b, turn, playsRef) {
     //playsRefs should already have move/jumps    
-    var randIndex = rnd(playsRef[MAX_PLAYS]);//Math.floor(Math.random() *  playsRef[MAX_PLAYS]);	
+    //var randIndex = rnd(playsRef[MAX_PLAYS]);
+    var randIndex = Math.floor(Math.random() *  playsRef[MAX_PLAYS]);	
     var randTypeDest = playsRef[randIndex];	
     b[turn] = randTypeDest & MASK_DEST; 
 }
@@ -73,7 +70,7 @@ function BoardLite_makeRandomPlace(b, turn, playsRef) {
 }
 
 
-function BoardLite_getPlays(b, turn, playsRef, cacheRef1, cacheRef2, getMinCache) {  //#thanks for the memories
+function BoardLite_getPlays(b, turn, playsRef, cacheRef1, cacheRef2, getMinCache, getAllPlaces) {  //#thanks for the memories
             
 
     //Get Moves
@@ -95,8 +92,9 @@ function BoardLite_getPlays(b, turn, playsRef, cacheRef1, cacheRef2, getMinCache
             BoardLite_Path_DFS_populateCache(b, PLAYER2, cacheRef2);
         }        
        
-        BoardLite_addPlaces(b, TYPE_HORZ, playsRef, cacheRef1, cacheRef2); 
-        BoardLite_addPlaces(b, TYPE_VERT, playsRef, cacheRef1, cacheRef2);         
+        if (typeof(getAllPlaces) == 'undefined') getAllPlaces = true;
+        BoardLite_addPlaces(b, TYPE_HORZ, playsRef, cacheRef1, cacheRef2, getAllPlaces); 
+        BoardLite_addPlaces(b, TYPE_VERT, playsRef, cacheRef1, cacheRef2, getAllPlaces);         
     }        
     //Else just use the moves and jumps    
 
@@ -243,11 +241,11 @@ function BoardLite_AddJumpToPlaysIfOpen(b, pos, dir, playsRef) {
 }
 
 
-function BoardLite_addPlaces(b, wallType, playsRef, cacheRef1, cacheRef2) { //playsRef, and cacheRefs passed by reference            
+function BoardLite_addPlaces(b, wallType, playsRef, cacheRef1, cacheRef2, getAllPlaces) { //playsRef, and cacheRefs passed by reference            
    
     var maxPlays = playsRef[MAX_PLAYS];           
     var wallTypeIndex = wallType >>> 9;
-
+    
     for (var w = 0; w < WALL_SPACES; w++) {      
         var adjIndex = (w*4)+(wallTypeIndex*2);
         var adjacent1 = ADJACENT[adjIndex]; 
@@ -260,29 +258,39 @@ function BoardLite_addPlaces(b, wallType, playsRef, cacheRef1, cacheRef2) { //pl
         else if (b[WALL_CENTERS+adjacent1] == wallType || b[WALL_CENTERS+adjacent2] == wallType) continue; //No - Intersects adjacent wall
         
         else if ((cacheRef1[w] | cacheRef2[w]) & TYPE_WALL) { //Part of player(s) path - Have to do further checking to make sure this is legal
+            
             if (BoardLite_touchesNeighbor(b, w, wallTypeIndex)) { //Touches neighbor - Have to verify this doesn't block a player
                 b[WALL_CENTERS+w] = wallType; //Temp place for checking
                                     
                 if ((cacheRef1[w] & wallType) && (cacheRef2[w] & wallType)) {// Both affected
                     var hasPath = BoardLite_Path_DFS_has(b, PLAYER1); //Start by checking player1 - DFS 
                     if (hasPath) canPlace = BoardLite_Path_DFS_has(b, PLAYER2); //Player1 has a path, so also check Player2 - DFS
-                    else canPlace = false; //Player1 blocked, so no need to check Player2
+                    else {
+                        canPlace = false; //Player1 blocked, so no need to check Player2
+                        playsRef[MAX_PLAYS-1]++;
+                        playsRef[MAX_PLAYS-2]++;
+                    }
                 }
-                else if (cacheRef1[w] & wallType) canPlace = BoardLite_Path_DFS_has(b, PLAYER1); //Only check Player1 - DFS
-                else canPlace = BoardLite_Path_DFS_has(b, PLAYER2); //Only check Player2 - DFS
+                else if (cacheRef1[w] & wallType) {
+                    canPlace = BoardLite_Path_DFS_has(b, PLAYER1); //Only check Player1 - DFS
+                    if (!canPlace) playsRef[MAX_PLAYS-1]++;
+                }
+                else {
+                    canPlace = BoardLite_Path_DFS_has(b, PLAYER2); //Only check Player2 - DFS
+                    if (!canPlace) playsRef[MAX_PLAYS-2]++;
+                }
                 
-                b[WALL_CENTERS+w] = TYPE_NONE; //Undo temp place                                   
-            }     
-            //else canPlace = false;         
+                b[WALL_CENTERS+w] = TYPE_NONE; //Undo temp place  
+               
+            }                 
             //Else not touching any other walls, so it can't be blocking any players and has to be legal
         }
-        //else canPlace = false;
+        else canPlace = getAllPlaces;
         //Else not part of cachePath, so it has to be legal
 
         //Legal place
-        if (canPlace) {
-            playsRef[maxPlays++] = wallType | w;            
-        }
+        if (canPlace) playsRef[maxPlays++] = wallType | w;            
+       
     }                     
          	
     playsRef[MAX_PLAYS] = maxPlays;
@@ -330,8 +338,88 @@ function BoardLite_isWallBetween(b, pos, dir) {
     else return false;
 }
 
-function BoardLite_score3(b, turn) {
 
+function BoardLite_scoreW(b, turn, weightWalls, weightDist) {
+    var oppTurn = OPP_TURN[turn];            
+           
+    var dist1 = BoardLite_Path_Min_getDist(b, turn); //Always recalc
+    var dist2;           
+    if (BoardLite_isAdjacent(b[turn], b[oppTurn])) { //See if opp is adjacent, and can jump
+        var minPathAndOrigin2 = BoardLite_Path_Min_getDistAndOrigin(b, oppTurn); 
+        var origin2 = minPathAndOrigin2[1];
+        dist2 = minPathAndOrigin2[0];
+        if (origin2 == b[turn]) dist2--; //Also has the potential for a jump			
+    }
+    else dist2 = BoardLite_Path_Min_getDist(b, oppTurn);
+
+    var score1 = BoardLite_scoreSideW(b, turn, dist1, weightWalls, weightDist); 
+    var score2 = BoardLite_scoreSideW(b, oppTurn, dist2+1, weightWalls, weightDist); //Extra dist, because it's not their turn    
+    return score1 - score2;         
+}
+
+function BoardLite_scoreSideW(b, turn, minDist, weightWalls, weightDist) {        
+    return (
+        (b[WALL_COUNT+turn] * weightWalls) +
+        ((FLOOR_SPACES-minDist) * weightDist)
+    );
+}
+
+function BoardLite_score3(b, turn, noPlaceCount1, noPlaceCount2) { 
+    //Note: noPlaceCount is actually the parents, and thus off by 1, but it seems awful expensive to recalc this when the parent will be mostly correctish
+    var oppTurn = OPP_TURN[turn];            
+    var overlapRef = new Uint16Array(FLOOR_SPACES); 
+    var scoreMeta1 = BoardLite_Path_getScoreMeta(b, turn, overlapRef);    //[minDist, overlap, circumlocation, origin] 
+    var scoreMeta2 = BoardLite_Path_getScoreMeta(b, oppTurn, overlapRef);
+    scoreMeta2[IDX_SCORE_DIST]++; //Extra dist, because it's not their turn 
+
+    var dist1 = scoreMeta1[IDX_SCORE_DIST];
+    var dist2 = scoreMeta2[IDX_SCORE_DIST];
+    
+    var pawnRow1 = FLOOR_POS_TO_R[b[turn]];
+    var pawnRow2 = FLOOR_POS_TO_R[b[oppTurn]];
+
+    var pastOpponentScore = 0;
+    var overlapScore = 0;
+    if (dist1 <= dist2) { //Bonus
+        overlap = WEIGHT_OVERLAP;  
+        if (turn == PLAYER1) {
+            if (pawnRow1 < pawnRow2) pastOpponentScore = WEIGHT_PAST_OPPONENT;
+        } 
+        else if (pawnRow2 > pawnRow1) pastOpponentScore = WEIGHT_PAST_OPPONENT;
+    }
+    else { //Penalty
+        overlapScore = -WEIGHT_OVERLAP;
+        if (turn == PLAYER1) {
+            if (pawnRow2 > pawnRow1) pastOpponentScore = -WEIGHT_PAST_OPPONENT;
+        } 
+        else if (pawnRow1 < pawnRow2) pastOpponentScore = -WEIGHT_PAST_OPPONENT;
+    }
+    
+    if (BoardLite_isAdjacent(b[turn], b[oppTurn])) { //See if opp is adjacent, and can jump        
+        var origin2 = scoreMeta2[IDX_SCORE_ORIGIN];        
+        if (origin2 == b[turn]) scoreMeta2[IDX_SCORE_DIST]--; //Also has the potential for a jump			
+    }   
+
+    var noPlaceScore1 = noPlaceCount1 * WEIGHT_NO_PLACE;
+    var noPlaceScore2 = noPlaceCount2 * WEIGHT_NO_PLACE;
+
+    var score1 = BoardLite_scoreSide3(b, turn, scoreMeta1); 
+    var score2 = BoardLite_scoreSide3(b, oppTurn, scoreMeta2); 
+        
+    return (score1 + overlapScore + pastOpponentScore + noPlaceScore1) - (score2 + noPlaceScore2);             
+}
+
+function BoardLite_scoreSide3(b, turn, meta) {    
+    
+    var score =    
+        (b[WALL_COUNT+turn] * WEIGHT_WALLCOUNT) 
+        + ((FLOOR_SPACES-meta[IDX_SCORE_DIST]) * WEIGHT_PATH) 
+        + (meta[IDX_SCORE_CIRCUMLOCATION] * WEIGHT_CIRCUMLOCATION)
+    ;        
+
+    //if (MEDIAN_ROWS[FLOOR_POS_TO_R[b[turn]]]) score += WEIGHT_PAST_MEDIAN;
+
+    return score;
 }
 
 function BoardLite_score2(b, turn) {
@@ -379,6 +467,8 @@ function BoardLite_score(b, turn, dest, type, cacheRef1, cacheRef2) {
     return score1 - score2;         
 }
 
+
+
 function BoardLite_scoreSide(b, turn, minDist) {    
     //return FLOOR_SPACES-minDist;
     return (
@@ -387,6 +477,7 @@ function BoardLite_scoreSide(b, turn, minDist) {
     );
 }
 
+/*
 function BoardLite_scoreSide3(b, turn, minDist) {  
     var pawn = b[turn]; 
     var oppTurn = OPP_TURN[turn]; 
@@ -402,6 +493,7 @@ function BoardLite_scoreSide3(b, turn, minDist) {
         (scoreWallRatio * WEIGHT_WALL_RATIO)
     );
 }
+*/
 
 function BoardLite_isGameOver(b, turn) {        
     //Reached the opposite end row
@@ -486,7 +578,38 @@ function BoardLite_toBoardMove(b, turn, typeDest) {
     }
 }
 
-
+function BoardLite_deriveMove(b1, b2, turn) {
+    //Pawn move
+    var pawn1 = b1[turn];
+    var pawn2 = b2[turn];
+    
+    if (pawn1 != pawn2) {
+        return {
+            sr:FLOOR_POS_TO_R[pawn1], 
+            sc:pawn1%FLOOR_SIZE,
+            dr:FLOOR_POS_TO_R[pawn2],
+            dc:pawn2%FLOOR_SIZE,
+            type:FLOOR
+        };
+    }
+    //Place wall
+    else {
+        for (var i = 0; i < WALL_SPACES; i++) { 
+            var w = WALL_CENTERS+i;  
+            if (b1[w] != b2[w]) {
+                var wallType = (b2[w] == TYPE_HORZ)? H_WALL : V_WALL;
+                return {
+                    r:WALL_POS_TO_R[i],
+                    c:i%WALL_SIZE,
+                    type: wallType
+                }
+                
+            }
+        }
+    }    
+    console.log('here');
+    throw new Error('Unable to derive move');
+}
 
 function BoardLite_isAdjacent(pawn, oppPawn) {
     

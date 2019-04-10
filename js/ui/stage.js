@@ -254,8 +254,14 @@ var Stage = (function() { //Stage namespace (module pattern)
 	}
 	
 	function onGameOver(winner, loser) {		
+		var winDelta = game.board.paths[loser].length;
 		var winText = (winner == PLAYER1)? 'Player 1' : 'Player 2';
-		var message = 'Game over! ' + winText + ' wins';
+		var message;
+		if (winDelta < 10) message = 'Game over! ' + winText + ' wins';
+		else if (winDelta < 15) message = 'GLORIOUS WIN!!\r\n' + winText + ' wins';
+		else if (winDelta < 25) message = 'DOMINATING WIN!!\r\n' + winText + ' wins';
+		else message = 'GOD-LIKE WIN!!\r\n' + winText + ' wins';		
+
 		board = game.board.copy();
 		setTimeout(function() {
 			alert(message);
@@ -371,12 +377,12 @@ var Stage = (function() { //Stage namespace (module pattern)
 	
 				//Walls
 				if (wall == H_WALL){ //Horizontal
-					if (menu.showWallPlacer && board.wallPlacers[r][c] != INVALID) ctx.fillStyle = COLOR_PLAYERS[board.wallPlacers[r][c]];
+					if (menu.showWallColors && board.wallPlacers[r][c] != INVALID) ctx.fillStyle = COLOR_PLAYERS[board.wallPlacers[r][c]];
 					else ctx.fillStyle = COLOR_WALL;
 					ctx.fillRect(x - WIDTH_FLOOR-WIDTH_FLOOR_OFFSET, y-WIDTH_FLOOR_OFFSET, WIDTH_WALL_LONG-WIDTH_FLOOR_OFFSET, WIDTH_WALL_SHORT);
 				}
 				else if (wall == V_WALL) { //Vertical
-					if (menu.showWallPlacer && board.wallPlacers[r][c] != INVALID) ctx.fillStyle = COLOR_PLAYERS[board.wallPlacers[r][c]];
+					if (menu.showWallColors && board.wallPlacers[r][c] != INVALID) ctx.fillStyle = COLOR_PLAYERS[board.wallPlacers[r][c]];
 					else ctx.fillStyle = COLOR_WALL;
 					ctx.fillRect(x-WIDTH_FLOOR_OFFSET, y - WIDTH_FLOOR-WIDTH_FLOOR_OFFSET, WIDTH_WALL_SHORT, WIDTH_WALL_LONG-WIDTH_FLOOR_OFFSET);
 				}

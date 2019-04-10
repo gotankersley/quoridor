@@ -10,11 +10,18 @@ Opt:
 */
 var MonteCarloPlayer = (function() { //Poor man's namespace (module pattern)
 
-	const MAX_GAMES = 20000;
+	const MAX_GAMES = 1000;
 
-	const MOVE_LIMIT = 30;
-	const SIM_WIN = 10;		
-	const SIM_LOSE = -10;
+	const MOVE_LIMIT = 360;
+	const SIM_WIN = 1;		
+	const SIM_LOSE = -1;
+
+	const WEIGHT_WALLS_START = 0.1;
+	const WEIGHT_WALLS_END = 5;
+	const WEIGHT_DIST_START = 8;
+	const WEIGHT_DIST_END = 12;
+	const STEP_WALLS = (WEIGHT_WALLS_END-WEIGHT_WALLS_START)/Math.sqrt(MAX_GAMES);
+	const STEP_DIST = (WEIGHT_DIST_END-WEIGHT_DIST_START)/Math.sqrt(MAX_GAMES);
 	
 	function play(board, onPlayed) {			
 		var timeStart = performance.now();
@@ -25,7 +32,7 @@ var MonteCarloPlayer = (function() { //Poor man's namespace (module pattern)
 		var cachePath1 = new Uint16Array(WALL_SPACES+1); //[WallType * 64][Min Dist]
 		var cachePath2 = new Uint16Array(WALL_SPACES+1); //[WallType * 64][Min Dist]	
 		
-		var gameTheoreticalScore = BoardLite_getPlays(bl, turn, plays, cachePath1, cachePath2, true);
+		var gameTheoreticalScore = BoardLite_getPlays(bl, turn, plays, cachePath1, cachePath2, true, true);
 		if (plays[MAX_PLAYS] == 0) throw new Error('MC:No moves available');
 		else if (gameTheoreticalScore == INFINITY) {
 			console.log('MonteCarlo: Win found');
@@ -40,7 +47,7 @@ var MonteCarloPlayer = (function() { //Poor man's namespace (module pattern)
 			return onPlayed(move);			
 		}	
 								
-		var simPlays = new Uint16Array(MAX_PLAYS+1);
+		
 		var bestScore = -INFINITY;
 		var bestPlayIndex = -1;
 		for (var p = 0; p < plays[MAX_PLAYS]; p++) {
@@ -68,10 +75,20 @@ var MonteCarloPlayer = (function() { //Poor man's namespace (module pattern)
 												
 			
 			var score = 0;
+			var curWeightWalls = WEIGHT_WALLS_START;
+			var curWeightDist = WEIGHT_WALLS_START;
 			for (var i = 0; i < MAX_GAMES; i++) {
 				var boardCopy = childBoard.slice();
-				var simResult = simulate(boardCopy, turn, simPlays);
+				
+				//var simResult = simulateHeuristic(boardCopy, turn, curWeightWalls, curWeightDist);
+				var simResult = simulate(boardCopy, turn);
 				score += simResult;
+				if (i % 10 == 0) {
+					curWeightWalls += STEP_WALLS;
+					curWeightDist = WEIGHT_DIST_START;
+				}
+				else curWeightDist += STEP_DIST;
+				
 			}
 			
 			if (score > bestScore){ 
@@ -92,49 +109,67 @@ var MonteCarloPlayer = (function() { //Poor man's namespace (module pattern)
 		var move = BoardLite_toBoardMove(bl, turn, typeDest);
 		return onPlayed(move);	
 	}
-	
-	function simulate(b, currentTurn, playsRef) {
+	//Heavy playout
+	function simulateHeuristic(b, currentTurn, weightWalls, weightDist) {
 		
 		var turn = OPP_TURN[currentTurn];
 
 		for (var p = 0; p < MOVE_LIMIT; p++) {	
-			playsRef[MAX_PLAYS] = 0;			
-
 			
-			var gameOverScore = BoardLite_winOrBlock(b, turn, playsRef);
-			
+			var playsRef = new Uint16Array(MAX_PLAYS+1);
+			var cachePath1 = new Uint16Array(WALL_SPACES+1); //[WallType * 64][Min Dist]
+			var cachePath2 = new Uint16Array(WALL_SPACES+1); //[WallType * 64][Min Dist]
+			var gameOverScore = BoardLite_getPlays(b, turn, playsRef, cachePath1, cachePath2, true, false);
 			if (gameOverScore == IN_PLAY) {
-				var oppTurn = OPP_TURN[turn];
-				var distOrigin1 = BoardLite_Path_Min_getDistAndOrigin(b, turn);
-				var distOrigin2 = BoardLite_Path_Min_getDistAndOrigin(b, oppTurn);
-
-				var dist1 = distOrigin1[0];
-				var dist2 = distOrigin2[0];
-
-				if (dist1 <= dist2 || b[WALL_COUNT+turn] == 0) {
-					var typeDest = distOrigin1[1];
-					var type = typeDest & MASK_TYPE;
+				var bestScore = -INFINITY;
+				var bestPlayIndex = 0; //default to first if loss				
+				for (var p = 0; p < playsRef[MAX_PLAYS]; p++) {
+					var typeDest = playsRef[p];
 					var dest = typeDest & MASK_DEST;
-					BoardLite_makeMove(b, turn, dest);
+					var type = typeDest & MASK_TYPE;				
+					
+					var childBoard = b.slice();
+					
+					if (type == TYPE_MOVE) BoardLite_makeMove(childBoard, turn, dest);
+					else BoardLite_makePlace(childBoard, turn, dest, type);
+									
+					var score = BoardLite_scoreW(childBoard, turn, weightWalls, weightDist);			
+										
+					if (score > bestScore){ 
+						bestScore = score;
+						bestPlayIndex = p;						
+					}					
+					
 				}
-				else {					
-					BoardLite_addMoves(b, turn, playsRef);
-					BoardLite_addJumps(b, turn, playsRef);		
-					if (rnd(135) <= 130) BoardLite_makeRandomPlace(b, turn, playsRef);
-					else BoardLite_makeRandomMove(b, turn, playsRef);
-				}		
-							
+								
+				var typeDest = playsRef[bestPlayIndex];
+				var dest = typeDest & MASK_DEST;
+				var type = typeDest & MASK_TYPE;	
+				if (type == TYPE_MOVE) BoardLite_makeMove(b, turn, dest);
+				else BoardLite_makePlace(b, turn, dest, type);
 								
 			}
 			//Game Over
 			else {			
 				if (gameOverScore == INFINITY) {
-					if (turn == currentTurn) return SIM_WIN;
-					else return SIM_LOSE;
+					if (turn == currentTurn) {
+						var dist = BoardLite_Path_Min_getDist(b, OPP_TURN[turn]); 
+						return dist/81;// SIM_WIN;
+					}
+					else {
+						var dist = BoardLite_Path_Min_getDist(b, turn); 
+						return (81-dist)/81;//SIM_LOSE;
+					}
 				}
 				else if (gameOverScore == -INFINITY) {
-					if (turn == currentTurn) return SIM_LOSE;
-					else return SIM_WIN;
+					if (turn == currentTurn) {
+						var dist = BoardLite_Path_Min_getDist(b, turn); 
+						return (81-dist)/81;//SIM_LOSE;
+					}
+					else {
+						var dist = BoardLite_Path_Min_getDist(b, OPP_TURN[turn]); 
+						return dist/81;// SIM_WIN;
+					}
 				}
 				else if (gameOverScore == MUST_PLAY) { //Forced move
 										
@@ -153,9 +188,88 @@ var MonteCarloPlayer = (function() { //Poor man's namespace (module pattern)
 
 		//Score
 		var score = BoardLite_score2(b, currentTurn);
-		if (score >= 0) return 0.5;
-		else return -0.5;
+		if (score >= 0) return 0.1;
+		else return -0.1;
 	}
+	
+	function simulate(b, currentTurn) {
+		
+		
+		var turn = OPP_TURN[currentTurn];
+
+		for (var p = 0; p < MOVE_LIMIT; p++) {					
+
+			
+			var playsRef = new Uint16Array(MAX_PLAYS+1);
+			var cachePath1 = new Uint16Array(WALL_SPACES+1); //[WallType * 64][Min Dist]
+			var cachePath2 = new Uint16Array(WALL_SPACES+1); //[WallType * 64][Min Dist]
+			var gameOverScore = BoardLite_getPlays(b, turn, playsRef, cachePath1, cachePath2, true, false);
+			
+			if (gameOverScore == IN_PLAY) {
+				var oppTurn = OPP_TURN[turn];
+				var distOrigin1 = BoardLite_Path_Min_getDistAndOrigin(b, turn);
+				var distOrigin2 = BoardLite_Path_Min_getDistAndOrigin(b, oppTurn);
+
+				var dist1 = distOrigin1[0];
+				var dist2 = distOrigin2[0];
+
+				if (dist1 <= dist2 || b[WALL_COUNT+turn] == 0) {
+					var typeDest = distOrigin1[1];
+					var type = typeDest & MASK_TYPE;
+					var dest = typeDest & MASK_DEST;
+					BoardLite_makeMove(b, turn, dest);
+				}
+				else {					
+					BoardLite_addMoves(b, turn, playsRef);
+					BoardLite_addJumps(b, turn, playsRef);		
+					BoardLite_makeRandomPlace(b, turn, playsRef);					
+				}		
+							
+								
+			}
+			//Game Over
+			else {			
+				if (gameOverScore == INFINITY) {
+					if (turn == currentTurn) {
+						var dist = BoardLite_Path_Min_getDist(b, OPP_TURN[turn]); 
+						return dist/81;// SIM_WIN;
+					}
+					else {
+						var dist = BoardLite_Path_Min_getDist(b, turn); 
+						return (81-dist)/81;//SIM_LOSE;
+					}
+				}
+				else if (gameOverScore == -INFINITY) {
+					if (turn == currentTurn) {
+						var dist = BoardLite_Path_Min_getDist(b, turn); 
+						return (81-dist)/81;//SIM_LOSE;
+					}
+					else {
+						var dist = BoardLite_Path_Min_getDist(b, OPP_TURN[turn]); 
+						return dist/81;// SIM_WIN;
+					}
+				}
+				else if (gameOverScore == MUST_PLAY) { //Forced move
+										
+					var typeDest = playsRef[0];
+					var type = typeDest & MASK_TYPE;
+					var dest = typeDest & MASK_DEST;												
+					BoardLite_makePlace(b, turn, dest, type);									
+				}
+				
+			}
+					
+			
+			//Change Turn
+			turn = +(!turn);				
+		}
+
+		//Score
+		var score = BoardLite_score2(b, currentTurn);
+		if (score >= 0) return 0.1;
+		else return -0.1;
+	}
+	 
 
 	/*
 	function simulateCritRegion(b, currentTurn, playsRef) {

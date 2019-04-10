@@ -1,5 +1,5 @@
 var AlphaBetaPlayer = (function() { //Poor man's namespace (module pattern)
-	const DEBUG = true;
+	const DEBUG = false;
 	const MAX_DEPTH = 4;
 		
 	var bestTypeDestAtDepth = new Array(MAX_DEPTH);		
@@ -32,11 +32,11 @@ var AlphaBetaPlayer = (function() { //Poor man's namespace (module pattern)
 
 		
 		//Debugging info
+		if (bestScore >= INFINITY) game.sendMessage('Minotaur: MOoo! (Win found)');
+		else if (bestScore <= -INFINITY) {
+			game.sendMessage('Minotaur: Inevitable loss'); 
+		}			
 		if (DEBUG) {
-			if (bestScore >= INFINITY) game.sendMessage('Minotaur: MOoo! (Win found)');
-			else if (bestScore <= -INFINITY) {
-				game.sendMessage('Minotaur: Inevitable loss'); 
-			}			
 			
 			console.log ('AlphaBeta Stats:');
 			console.log ('- time: ' + duration + ' ms');
@@ -76,15 +76,15 @@ var AlphaBetaPlayer = (function() { //Poor man's namespace (module pattern)
 		
 
 		var useMinCache = true;//depth+1 >= MAX_DEPTH? true : false;
-		var gameTheoreticalScore;
-		if (turn == PLAYER1) gameTheoreticalScore = BoardLite_getPlays(bl, turn, plays, cachePath1, cachePath2, useMinCache); //Pass play by reference
-		else gameTheoreticalScore = BoardLite_getPlays(bl, turn, plays, cachePath2, cachePath1, useMinCache); //Pass play by reference
-		if (gameTheoreticalScore == INFINITY) { //Game theoretical win			
+		var gameOverScore;
+		if (turn == PLAYER1) gameOverScore = BoardLite_getPlays(bl, turn, plays, cachePath1, cachePath2, useMinCache); //Pass play by reference
+		else gameOverScore = BoardLite_getPlays(bl, turn, plays, cachePath2, cachePath1, useMinCache); //Pass play by reference
+		if (gameOverScore == INFINITY) { //Game theoretical win			
 			bestTypeDestAtDepth[depth] = plays[0];
-			bestScoreAtDepth[depth] = gameTheoreticalScore;
+			bestScoreAtDepth[depth] = gameOverScore;
 			return INFINITY; 
 		}
-		else if (gameTheoreticalScore == INFINITY) return INFINITY;
+		else if (gameOverScore == -INFINITY) return -INFINITY;
 		
 
 		//Loop through child states						

@@ -8,15 +8,18 @@ function MenuProperties() {
 	this.showLabels = this.getDefault('showLabels', false);
 	this.showPath = this.getDefault('showPath', true);
 	this.showDistance = this.getDefault('showDistance', true);
-	this.showWallColors = this.getDefault('showWallColors', false);
+	this.showWallColors = this.getDefault('showWallColors', true);	
 
 	//Debug
 	this.showGrid = false;
 	this.showCenters = false;
 	this.showPositions = this.getDefault('showPositions', false);
-	this.showCoordinates = true;//this.getDefault('showCoordinates', true);
+	this.showCoordinates = this.getDefault('showCoordinates', true);
 	this.pathFindingBFS = true;
 	this.animSpeed = 500;	
+
+	//Links
+	this.hotkeys = function() {window.location = 'doc/hotkeys.html'; }		
 }
 
 MenuProperties.prototype.getDefault = function(propertyName, defaultValue) {
@@ -37,10 +40,10 @@ function MenuManager() {
 		Human:PLAYER_HUMAN, 	
 		Random:PLAYER_RANDOM,		
 		Weak:PLAYER_HEURISTIC,		
-		Theseus:PLAYER_THESEUS,	
+		//Theseus:PLAYER_THESEUS,	
 		Minotaur:PLAYER_ALPHABETA,	
 		'EvilKingMinos':PLAYER_MINOTAUR_PLUS,	
-		Network:PLAYER_NETWORK,				
+		Network:PLAYER_NETWORK,						
 		//wasm:PLAYER_WASM,	
 		//MonteCarlo:PLAYER_MONTECARLO,
 		//MCTS:PLAYER_MCTS,
@@ -71,10 +74,12 @@ function MenuManager() {
 	//Links menu
 	//var linksMenu = optionsMenu.addFolder('Links');				
 	
+
 	//Root menu			
 	this.rootMenu.add(this.properties, 'player1', PLAYER_OPTIONS).onChange(this.onChangePlayer);
 	this.rootMenu.add(this.properties, 'player2', PLAYER_OPTIONS).onChange(this.onChangePlayer);	
-	
+	this.rootMenu.add(this.properties, 'hotkeys');
+
 	//Configure button hack
 	var propertyNodes = document.querySelectorAll('.dg.main .property-name');			
 	for (var n = 0; n < propertyNodes.length; n++) {

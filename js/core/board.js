@@ -731,6 +731,10 @@ Board.prototype.qmnFromRC = function(pos) {
 	return String.fromCharCode(65+pos.c) + (pos.r+1);
 }
 
+Board.prototype.omnFromRC = function(pos) {
+	return String.fromCharCode(65+pos.c) + (FLOOR_SIZE-pos.r);
+}
+
 Board.prototype.qmnMove = function(qmn) {	
 	var move = this.qmnToMove(qmn);
 	var moveCode = this.makeMove(move);
@@ -768,6 +772,35 @@ Board.prototype.qmnToMove = function(qmn) {
 	else throw new Error('Invalid QMN: ' + qmn);	
 }
 
+Board.prototype.omnToMove = function(omn) {	
+	//Example E2, or A2V	
+	if (omn.length == 2) { //Move pawn
+		omn = omn.toLowerCase().replace(/[^a-i][^1-9]/g, '');
+		return {
+			sr : this.pawns[this.turn].r,
+			sc : this.pawns[this.turn].c,
+			
+			dr : FLOOR_SIZE-parseInt(omn.charAt(1)),
+			dc : parseInt(omn.charCodeAt(0))-97,
+			type: FLOOR
+		}
+	}
+	else if (omn.length == 3) { //Place wall
+		omn = omn.toLowerCase().replace(/[^a-i][^1-9][hv]/g, '');
+		var wall = omn.charAt(2);
+		if (wall == 'v') wall = V_WALL;
+		else if (wall == 'h') wall = H_WALL;
+		else throw new Error('Invalid OMN wall type:' + wall);
+
+		return {
+			r : FLOOR_SIZE-parseInt(omn.charAt(1))-1, //lower left
+			c : parseInt(omn.charCodeAt(0))-97,						
+			type: wall
+		}
+	}
+	else throw new Error('Invalid OMN: ' + omn);	
+}
+
 Board.prototype.qmnFromMove = function(move) {	
 	//Move pawn
 	if (move.type == FLOOR) return this.qmnFromRC({r:move.dr, c:move.dc}); 
@@ -776,6 +809,19 @@ Board.prototype.qmnFromMove = function(move) {
 	else { 
 		var wallType = move.type == H_WALL? CHAR_H_WALL : CHAR_V_WALL;
 		return this.qmnFromRC(move) + wallType; 		
+	}
+		
+}
+
+Board.prototype.omnFromMove = function(move) {	
+	//Move pawn
+	if (move.type == FLOOR) return this.omnFromRC({r:move.dr, c:move.dc}); 
+
+	//Place wall
+	else { 
+		var wallType = move.type == H_WALL? CHAR_H_WALL : CHAR_V_WALL;
+		var omn = String.fromCharCode(65+move.c) + (FLOOR_SIZE-move.r-1); //For lower left corner
+		return omn + wallType; 		
 	}
 		
 }

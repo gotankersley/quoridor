@@ -2,7 +2,7 @@ var TheseusPlayer = (function() { //Picket namespace (Module pattern)
 
 	var extraParams = [INVALID,INVALID];		
 	var playerId = +(new Date()); //Timestamp
-	const THESEUS_URL = 'https://schneiderbox.net/theseus';	
+	const THESEUS_URL = '';
 
 	function getPlay(board, onPlayed) {			
 		var turn = board.turn;

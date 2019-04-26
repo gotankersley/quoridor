@@ -462,8 +462,8 @@ var Stage = (function() { //Stage namespace (module pattern)
 		for (var i = 0; i < FLOOR_SIZE; i++) {
 			var unit = i * GRID_SIZE;			
 			var offset = unit + HALF_GRID + INFO_OFFSET + 5;
-			infoCtx.fillText(i+1, INFO_OFFSET-5, offset);	//Vertical left label
-			infoCtx.fillText(i+1, CANVAS_SIZE+INFO_OFFSET-5, offset);	//Vertical right label
+			infoCtx.fillText(FLOOR_SIZE-i, INFO_OFFSET-5, offset);	//Vertical left label
+			infoCtx.fillText(FLOOR_SIZE-i, CANVAS_SIZE+INFO_OFFSET-5, offset);	//Vertical right label
 
 			infoCtx.fillText(String.fromCharCode(65 + i), offset-10, INFO_OFFSET+5);	//Horizontal top label
 			infoCtx.fillText(String.fromCharCode(65 + i), offset-10, CANVAS_SIZE+INFO_OFFSET+5);	//Horizontal bottom label

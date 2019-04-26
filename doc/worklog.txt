@@ -1,0 +1,18 @@
+MonteCarlo flat
+Things tried:
+- Always take a win if possible
+- Always simple block a win if possible
+- Simulating all moves and places
+- Restricting children to critical region, (but not the simulations)
+- Restricting both children and simulations to the critical region
+
+Metrics:
+- 10k, to 20k simulations per each child
+- Allow 30 turns per game, and then just score simulation
+- Move around 90% of the time in simulations, and place the other 10%
+- 50% of the time move along the minimum path 
+
+Since the goal of this was to focus on algorithmic strength not performance, I didn't even worry about the performance, (assuming I could try to optimize it later if worthwhile - although the performance of 20+ seconds is so bad, it would need about an order of magnitude improvement to be usable)
+
+However, of the above things I tried, all of them looked very weak
+

@@ -13,6 +13,7 @@ const PLAYER_WASM = 6;
 const PLAYER_MONTECARLO = 7;
 const PLAYER_MCTS = 8;
 const PLAYER_MINOTAUR_PLUS = 9;
+const PLAYER_SOFTDEV = 10;
 
 
 const EVENT_INVALID = 0;
@@ -170,6 +171,7 @@ Game.prototype.play = function() {
 		case PLAYER_ALPHABETA: AlphaBetaPlayer.getPlay(board, this.onPlayed); break; //Minotaur
 		case PLAYER_MINOTAUR_PLUS: MinotaurPlusPlayer.getPlay(board, this.onPlayed); break; //MinotaurPlus
 		case PLAYER_NETWORK: NetworkPlayer.getPlay(board, this.onPlayed); break; //Network		
+		case PLAYER_SOFTDEV: SoftdevPlayer.getPlay(board, this.onPlayed); break; //Softdev		
 		case PLAYER_THESEUS: TheseusPlayer.getPlay(board, this.onPlayed); break; //Theseus		
 		case PLAYER_WASM: WasmPlayer.getPlay(board, this.onPlayed); break; //Wasm	
 		case PLAYER_MONTECARLO: MonteCarloPlayer.getPlay(board, this.onPlayed); break; //MonteCarlo	
@@ -244,6 +246,7 @@ Game.prototype.getPlayerName = function(player) {
 		case PLAYER_WASM: return 'Wasm';
 		case PLAYER_MONTECARLO: return 'MonteCarlo';
 		case PLAYER_MCTS: return 'MCTS';
+		case PLAYER_SOFTDEV: return 'Softdev';
 		default: return 'Unknown';
 	}		
 }
